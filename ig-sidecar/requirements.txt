@@ -1,0 +1,6 @@
+# Loosely pinned: instagrapi pins its own exact pydantic, so we let it drive that
+# transitive dependency instead of fighting it. FastAPI/uvicorn stay flexible so
+# they resolve against whatever pydantic instagrapi requires.
+instagrapi>=2.1.0
+fastapi
+uvicorn[standard]
