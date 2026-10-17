@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   BackHandler,
   Easing,
@@ -8,16 +9,19 @@ import {
   SafeAreaView,
   StatusBar,
   StyleSheet,
+  View,
 } from 'react-native';
 import CookieManager from '@react-native-cookies/cookies';
 import { colors } from './src/theme';
-import { api } from './src/api';
-import type { ListKind, Route } from './src/navigation';
+import { api, ApiError, THROTTLE_COOLDOWN_MS } from './src/api';
+import { clearSession, loadSession, saveSession } from './src/storage';
+import type { ListKind, Route, RowAction } from './src/navigation';
 import type { Analysis, LoginResponse, Profile, User } from './src/types';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { WebViewLoginScreen } from './src/screens/WebViewLoginScreen';
 import { ChallengeScreen } from './src/screens/ChallengeScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
+import { CollectScreen } from './src/screens/CollectScreen';
 import { ListScreen } from './src/screens/ListScreen';
 import { ProfileViewersScreen } from './src/screens/ProfileViewersScreen';
 
@@ -28,6 +32,7 @@ const DEPTH: Record<string, number> = {
   webviewLogin: 1,
   challenge: 1,
   home: 1,
+  collect: 2,
   list: 2,
   profileViewers: 2,
 };
@@ -47,9 +52,14 @@ export default function App() {
   // Analysis (diff + full lists) is fetched ONCE on button press and cached, so
   // every list view is instant and we never re-hit Instagram per screen.
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  // Instagram threw a 429 at us: no analysis until this passes. Retrying through
+  // a rate limit is what makes it last longer, so the UI has to actually stop.
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  // True until the stored session has been read back from the Keychain, so we
+  // never flash the login screen at someone who is already signed in.
+  const [restoring, setRestoring] = useState(true);
 
   function goHome(r: LoginResponse) {
     setProfile(r.profile);
@@ -58,12 +68,19 @@ export default function App() {
     setLastUpdated(null);
     setHome({ sessionId: r.sessionId, username: r.username });
     setRoute({ name: 'home', sessionId: r.sessionId, username: r.username });
+    // Survive app restarts and rebuilds: the session id is all we need to pick
+    // up where we left off, and the backend keeps its side on disk too.
+    // The password/challenge login paths return no profile; the dashboard fills
+    // it in on the next launch validation.
+    saveSession({ sessionId: r.sessionId, username: r.username, profile: r.profile ?? null });
   }
 
-  function logout() {
+  // Wipe every local trace of the signed-in account and go back to login.
+  function resetToLogin() {
     // Clear the WebView's Instagram cookies so the next login can use a different
     // account (otherwise the embedded browser stays signed in to the old one).
     CookieManager.clearAll(true).catch(() => {});
+    clearSession();
     setProfile(null);
     setAnalysis(null);
     setAnalyzeError(null);
@@ -72,22 +89,82 @@ export default function App() {
     setRoute({ name: 'login' });
   }
 
-  async function analyze(sessionId: string) {
-    setAnalyzing(true);
-    setAnalyzeError(null);
-    try {
-      const a = await api.analysis(sessionId);
-      setAnalysis(a);
-      setLastUpdated(Date.now());
-      // Keep the header counts in sync with the fresh analysis.
-      setProfile((p) =>
-        p ? { ...p, followersCount: a.followersCount, followingCount: a.followingCount } : p,
+  // Deliberate sign-out. Takes no arguments — it is wired straight to onPress,
+  // which would otherwise hand it a gesture event.
+  function logout() {
+    // Drop the server-side session too: it now survives restarts, so leaving it
+    // behind would leave a usable handle on the account.
+    if (home) api.logout(home.sessionId).catch(() => {});
+    resetToLogin();
+  }
+
+  // On launch: restore the stored session, show the dashboard straight away with
+  // the cached profile, then check with the backend whether it still works.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const stored = await loadSession();
+      if (cancelled) return;
+      if (!stored) {
+        setRestoring(false);
+        return;
+      }
+      setProfile(stored.profile ?? null);
+      setHome({ sessionId: stored.sessionId, username: stored.username });
+      setRoute({ name: 'home', sessionId: stored.sessionId, username: stored.username });
+      setRestoring(false);
+
+      try {
+        const p = await api.profile(stored.sessionId);
+        if (cancelled) return;
+        setProfile(p);
+        saveSession({ sessionId: stored.sessionId, username: stored.username, profile: p });
+      } catch (e) {
+        // Only a rejected session sends the user back to login. A backend that is
+        // merely down (status 0) must not wipe a perfectly good session.
+        if (!cancelled && e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+          console.log('[restore] session reddedildi, tekrar giris gerekiyor');
+          resetToLogin(); // the backend already rejected it; nothing to delete there
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Analysis now runs on the CollectScreen: the lists are paginated inside the
+  // app's own Instagram browser and only the finished lists reach the backend.
+  // This screen's job is just to refuse to start while we are in a cooldown.
+  function startAnalyze(sessionId: string, username: string) {
+    const left = cooldownUntil != null ? cooldownUntil - Date.now() : 0;
+    if (left > 0) {
+      setAnalyzeError(
+        `Instagram istekleri geçici olarak sınırladı. ${Math.ceil(left / 60000)} dk sonra tekrar dene.`,
       );
-    } catch (e) {
-      setAnalyzeError(e instanceof Error ? e.message : 'Analiz başarısız');
-    } finally {
-      setAnalyzing(false);
+      return;
     }
+    setAnalyzeError(null);
+    setRoute({ name: 'collect', sessionId, username });
+  }
+
+  function applyAnalysis(a: Analysis) {
+    setAnalysis(a);
+    setLastUpdated(Date.now());
+    // Keep the header counts in sync with the fresh analysis.
+    setProfile((p) =>
+      p ? { ...p, followersCount: a.followersCount, followingCount: a.followingCount } : p,
+    );
+    backHome();
+  }
+
+  // Instagram said slow down — anywhere in the collection. Park the button for a
+  // cooldown instead of bouncing the user back to a screen that invites a retry.
+  function onThrottled(message: string) {
+    setCooldownUntil(Date.now() + THROTTLE_COOLDOWN_MS);
+    setAnalyzeError(message);
+    backHome();
   }
 
   function listUsers(kind: ListKind): User[] {
@@ -111,6 +188,55 @@ export default function App() {
     }
   }
 
+  // Accounts I currently follow — the "unfollowed" list is a snapshot diff, so it
+  // needs this to know which of those rows I can still unfollow.
+  const followingPks = useMemo(
+    () => new Set((analysis?.following ?? []).map((u) => u.pk)),
+    [analysis],
+  );
+
+  // A row action succeeded on Instagram; move the account between the cached
+  // lists so every screen (and the dashboard counts) matches reality without
+  // re-running the whole analysis.
+  function applyAction(user: User, action: RowAction) {
+    setAnalysis((a) => {
+      if (!a) return a;
+      const drop = (list: User[]) => list.filter((u) => u.pk !== user.pk);
+      const wasMutual = a.mutuals.some((u) => u.pk === user.pk);
+
+      if (action === 'unfollow') {
+        return {
+          ...a,
+          following: drop(a.following),
+          followingCount: Math.max(0, a.followingCount - 1),
+          mutuals: wasMutual ? drop(a.mutuals) : a.mutuals,
+          mutualsCount: wasMutual ? Math.max(0, a.mutualsCount - 1) : a.mutualsCount,
+          // A mutual I just unfollowed still follows me → they become a fan.
+          fans: wasMutual ? [user, ...a.fans] : a.fans,
+          notFollowingBack: drop(a.notFollowingBack),
+        };
+      }
+      return {
+        ...a,
+        followers: drop(a.followers),
+        followersCount: Math.max(0, a.followersCount - 1),
+        mutuals: wasMutual ? drop(a.mutuals) : a.mutuals,
+        mutualsCount: wasMutual ? Math.max(0, a.mutualsCount - 1) : a.mutualsCount,
+        // A mutual I removed is still someone I follow → not following me back.
+        notFollowingBack: wasMutual ? [user, ...a.notFollowingBack] : a.notFollowingBack,
+        fans: drop(a.fans),
+        newFollowers: drop(a.newFollowers),
+      };
+    });
+    setProfile((p) =>
+      !p
+        ? p
+        : action === 'unfollow'
+          ? { ...p, followingCount: Math.max(0, p.followingCount - 1) }
+          : { ...p, followersCount: Math.max(0, p.followersCount - 1) },
+    );
+  }
+
   const backHome = () => {
     if (home) setRoute({ name: 'home', sessionId: home.sessionId, username: home.username });
   };
@@ -121,6 +247,7 @@ export default function App() {
     switch (route.name) {
       case 'list':
       case 'profileViewers':
+      case 'collect':
         backHome();
         return true;
       case 'webviewLogin':
@@ -139,6 +266,19 @@ export default function App() {
   });
 
   const topInset = Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0;
+
+  // Reading the Keychain takes a moment; hold on a blank screen rather than
+  // showing a login form that is about to be replaced.
+  if (restoring) {
+    return (
+      <SafeAreaView style={[styles.safe, { paddingTop: topInset }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+        <View style={styles.boot}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { paddingTop: topInset }]}>
@@ -172,10 +312,11 @@ export default function App() {
             username={route.username}
             profile={profile}
             analysis={analysis}
-            analyzing={analyzing}
+            analyzing={false}
             error={analyzeError}
+            cooldownUntil={cooldownUntil}
             lastUpdated={lastUpdated}
-            onAnalyze={() => analyze(route.sessionId)}
+            onAnalyze={() => startAnalyze(route.sessionId, route.username)}
             onOpenList={(kind: ListKind) =>
               setRoute({ name: 'list', sessionId: route.sessionId, kind })
             }
@@ -184,8 +325,26 @@ export default function App() {
           />
         )}
 
+        {route.name === 'collect' && (
+          <CollectScreen
+            sessionId={route.sessionId}
+            expectedFollowers={profile?.followersCount}
+            expectedFollowing={profile?.followingCount}
+            onComplete={applyAnalysis}
+            onThrottled={onThrottled}
+            onCancel={backHome}
+          />
+        )}
+
         {route.name === 'list' && (
-          <ListScreen kind={route.kind} users={listUsers(route.kind)} onBack={backHome} />
+          <ListScreen
+            kind={route.kind}
+            sessionId={route.sessionId}
+            users={listUsers(route.kind)}
+            followingPks={followingPks}
+            onApplied={applyAction}
+            onBack={backHome}
+          />
         )}
 
         {route.name === 'profileViewers' && <ProfileViewersScreen onBack={backHome} />}
@@ -242,4 +401,5 @@ function AnimatedRoute({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   flex: { flex: 1 },
+  boot: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

@@ -65,13 +65,15 @@ func (r *Real) Login(ctx context.Context, username, password string) (*LoginResu
 	}, nil
 }
 
-func (r *Real) LoginBySessionID(ctx context.Context, sessionID string) (*LoginResult, error) {
+func (r *Real) LoginBySessionID(ctx context.Context, w WebLogin) (*LoginResult, error) {
 	var out struct {
 		Auth     string   `json:"auth"`
 		Username string   `json:"username"`
 		Profile  *Profile `json:"profile"`
 	}
-	if err := r.call(ctx, "/login_sessionid", map[string]string{"sessionid": sessionID}, &out); err != nil {
+	// The whole cookie jar and the browser's User-Agent travel with the login: the
+	// sidecar stores them in the auth blob and reuses them for every later fetch.
+	if err := r.call(ctx, "/login_sessionid", w, &out); err != nil {
 		return nil, err
 	}
 	return &LoginResult{
@@ -111,6 +113,22 @@ func (r *Real) Following(ctx context.Context, s *Session) ([]User, error) {
 	return r.fetch(ctx, "/following", s)
 }
 
+func (r *Real) UserDetail(ctx context.Context, s *Session, pk string) (*UserDetail, error) {
+	var d UserDetail
+	if err := r.call(ctx, "/user_detail", map[string]string{"auth": s.Auth, "pk": pk}, &d); err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
+func (r *Real) Unfollow(ctx context.Context, s *Session, pk string) error {
+	return r.call(ctx, "/unfollow", map[string]string{"auth": s.Auth, "pk": pk}, nil)
+}
+
+func (r *Real) RemoveFollower(ctx context.Context, s *Session, pk string) error {
+	return r.call(ctx, "/remove_follower", map[string]string{"auth": s.Auth, "pk": pk}, nil)
+}
+
 func (r *Real) fetch(ctx context.Context, path string, s *Session) ([]User, error) {
 	var users []User
 	if err := r.call(ctx, path, map[string]string{"auth": s.Auth}, &users); err != nil {
@@ -144,9 +162,12 @@ func (r *Real) call(ctx context.Context, path string, body any, dst any) error {
 			Detail string `json:"detail"`
 		}
 		if json.Unmarshal(data, &e) == nil && e.Detail != "" {
-			return fmt.Errorf("%s", e.Detail)
+			return &UpstreamError{Status: resp.StatusCode, Msg: e.Detail}
 		}
-		return fmt.Errorf("sidecar %s: status %d", path, resp.StatusCode)
+		return &UpstreamError{
+			Status: resp.StatusCode,
+			Msg:    fmt.Sprintf("sidecar %s: status %d", path, resp.StatusCode),
+		}
 	}
 	if dst == nil {
 		return nil

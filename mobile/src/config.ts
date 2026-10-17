@@ -1,8 +1,7 @@
 import Constants from 'expo-constants';
 
-// Backend port. The Go backend defaults to 8080, but on this machine 8080 was
-// taken so we run it on 8090 (PORT=8090 go run ./cmd/server). Change if needed.
-const BACKEND_PORT = 8090;
+// Backend port. The Go backend defaults to 8080.
+const BACKEND_PORT = 8080;
 
 // In Expo Go on a physical device, "localhost" points at the phone, not the dev
 // machine. Constants.expoConfig.hostUri is the Metro bundler host (the dev

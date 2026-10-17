@@ -18,6 +18,8 @@ type Props = {
   analysis: Analysis | null;
   analyzing: boolean;
   error: string | null;
+  // Timestamp until which Instagram has rate-limited us (429), or null.
+  cooldownUntil: number | null;
   lastUpdated: number | null;
   onAnalyze: () => void;
   onOpenList: (kind: ListKind) => void;
@@ -39,20 +41,28 @@ export function DashboardScreen({
   analysis,
   analyzing,
   error,
+  cooldownUntil,
   lastUpdated,
   onAnalyze,
   onOpenList,
   onOpenProfileViewers,
   onLogout,
 }: Props) {
+  // While Instagram is rate-limiting us, every analyse entry point is disabled:
+  // a retry cannot succeed and only refreshes the limit.
+  const coolingMinutes =
+    cooldownUntil != null ? Math.ceil((cooldownUntil - Date.now()) / 60000) : 0;
+  const cooling = coolingMinutes > 0;
+  const busy = analyzing || cooling;
+
   const name = profile?.fullName || username;
   const followers = profile?.followersCount ?? analysis?.followersCount ?? 0;
   const following = profile?.followingCount ?? analysis?.followingCount ?? 0;
 
   // Follower/Following tiles open their list once analysis exists; otherwise a tap
   // kicks off the analysis (which is what produces the lists).
-  const followersPress = analysis ? () => onOpenList('followers') : onAnalyze;
-  const followingPress = analysis ? () => onOpenList('following') : onAnalyze;
+  const followersPress = analysis ? () => onOpenList('followers') : cooling ? undefined : onAnalyze;
+  const followingPress = analysis ? () => onOpenList('following') : cooling ? undefined : onAnalyze;
 
   return (
     <ScrollView
@@ -60,7 +70,11 @@ export function DashboardScreen({
       contentContainerStyle={styles.content}
       refreshControl={
         analysis ? (
-          <RefreshControl refreshing={analyzing} onRefresh={onAnalyze} tintColor={colors.primary} />
+          <RefreshControl
+            refreshing={analyzing}
+            onRefresh={cooling ? () => {} : onAnalyze}
+            tintColor={colors.primary}
+          />
         ) : undefined
       }
     >
@@ -102,8 +116,15 @@ export function DashboardScreen({
             Seni geri takip etmeyenleri, hayranlarını ve karşılıklı takipleşmeleri görmek için analizi başlat.
           </Text>
           {error && <Text style={styles.error}>{error}</Text>}
-          <TouchableOpacity style={styles.cta} onPress={onAnalyze} activeOpacity={0.85}>
-            <Text style={styles.ctaText}>Analiz Et</Text>
+          <TouchableOpacity
+            style={[styles.cta, cooling && styles.ctaDisabled]}
+            onPress={onAnalyze}
+            disabled={cooling}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.ctaText}>
+              {cooling ? `${coolingMinutes} dk sonra tekrar dene` : 'Analiz Et'}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -126,18 +147,26 @@ export function DashboardScreen({
               {lastUpdated != null ? `Son güncelleme: ${formatDate(lastUpdated)}` : ' '}
             </Text>
             <TouchableOpacity
-              style={[styles.reanalyze, analyzing && styles.reanalyzeDisabled]}
+              style={[styles.reanalyze, busy && styles.reanalyzeDisabled]}
               onPress={onAnalyze}
-              disabled={analyzing}
+              disabled={busy}
               activeOpacity={0.85}
             >
               {analyzing ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
-                <Text style={styles.reanalyzeText}>↻ Tekrar analiz et</Text>
+                <Text style={styles.reanalyzeText}>
+                  {cooling ? `↻ ${coolingMinutes} dk sonra` : '↻ Tekrar analiz et'}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
+
+          {error && (
+            <View style={[styles.card, shadow(1)]}>
+              <Text style={styles.error}>{error}</Text>
+            </View>
+          )}
 
           <BigCard
             count={analysis.mutualsCount}
@@ -310,6 +339,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     ...shadow(2),
   },
+  ctaDisabled: { opacity: 0.5 },
   ctaText: { color: '#fff', fontSize: 17, fontWeight: '800' },
 
   updatedRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },

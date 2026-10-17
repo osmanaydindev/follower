@@ -7,7 +7,7 @@ import "context"
 
 // User is a single Instagram account as it appears in a follower/following list.
 type User struct {
-	PK            string `json:"pk"`       // stable numeric id (as string)
+	PK            string `json:"pk"` // stable numeric id (as string)
 	Username      string `json:"username"`
 	FullName      string `json:"fullName"`
 	IsPrivate     bool   `json:"isPrivate"`
@@ -41,6 +41,23 @@ type Profile struct {
 	IsVerified     bool   `json:"isVerified"`
 }
 
+// UserDetail is the expanded view of ANOTHER account, fetched one at a time and
+// only for rows the user actually looks at (each one costs a private-API call).
+// It carries the counts shown on a list row plus a freshly-signed picture URL —
+// Instagram's CDN URLs expire, so a picture stored in an old snapshot needs this
+// to render at all.
+type UserDetail struct {
+	PK             string `json:"pk"`
+	Username       string `json:"username"`
+	FullName       string `json:"fullName"`
+	ProfilePicURL  string `json:"profilePicUrl"`
+	FollowersCount int    `json:"followersCount"`
+	FollowingCount int    `json:"followingCount"`
+	MediaCount     int    `json:"mediaCount"`
+	IsPrivate      bool   `json:"isPrivate"`
+	IsVerified     bool   `json:"isVerified"`
+}
+
 // LoginResult is the outcome of a login attempt. When NeedsChallenge is true the
 // caller must collect a verification code from the user and call SubmitChallenge.
 // Profile is populated for sessionid logins (cheap, in the same call).
@@ -50,15 +67,32 @@ type LoginResult struct {
 	Profile        *Profile
 }
 
+// WebLogin is everything the embedded browser login produced. Instagram binds a
+// session to the browser that created it, so the sessionid alone is not enough:
+// data requests must go out with the SAME User-Agent and the rest of the cookie
+// jar (csrftoken, mid, ig_did). Presenting the cookie from a different client is
+// what gets answered with "Please wait a few minutes".
+type WebLogin struct {
+	SessionID string            `json:"sessionid"`
+	Cookies   map[string]string `json:"cookies"`
+	UserAgent string            `json:"userAgent"`
+
+	// Profile is the account summary the app already read inside its logged-in
+	// WebView. When present the provider must not ask Instagram for it: the
+	// browser just proved the session works, and our own copy of that request
+	// is the one Instagram is most likely to refuse.
+	Profile *Profile `json:"profile,omitempty"`
+}
+
 // Client is implemented by each provider (mock, real).
 type Client interface {
 	// Login authenticates with a username/password. The password must be used
 	// transiently and never stored.
 	Login(ctx context.Context, username, password string) (*LoginResult, error)
 
-	// LoginBySessionID authenticates with a sessionid cookie captured from a real
-	// browser login (the robust path — Instagram does not block it).
-	LoginBySessionID(ctx context.Context, sessionID string) (*LoginResult, error)
+	// LoginBySessionID authenticates with cookies captured from a real browser
+	// login (the robust path — Instagram does not block it).
+	LoginBySessionID(ctx context.Context, w WebLogin) (*LoginResult, error)
 
 	// Profile returns the cheap account summary (counts + picture) for a session.
 	Profile(ctx context.Context, s *Session) (*Profile, error)
@@ -71,4 +105,14 @@ type Client interface {
 
 	// Following returns accounts the session user follows.
 	Following(ctx context.Context, s *Session) ([]User, error)
+
+	// UserDetail returns the expanded view (counts + fresh picture) of one other
+	// account, identified by pk.
+	UserDetail(ctx context.Context, s *Session, pk string) (*UserDetail, error)
+
+	// Unfollow makes the session user stop following pk.
+	Unfollow(ctx context.Context, s *Session, pk string) error
+
+	// RemoveFollower removes pk from the session user's followers.
+	RemoveFollower(ctx context.Context, s *Session, pk string) error
 }

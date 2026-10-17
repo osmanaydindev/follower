@@ -5,15 +5,30 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"strconv"
+	"sync"
 )
 
 // Mock is a deterministic fake provider. Given a username it always returns the
 // same generated followers/following lists, with a realistic overlap so the diff
 // features (not-following-back / fans) have meaningful data. It never touches the
 // network, so the whole app can be built and tested against it.
-type Mock struct{}
+//
+// Unfollow/RemoveFollower are remembered in memory (per username) and filtered
+// out of subsequent Following/Followers calls, so a re-analysis after an action
+// reflects it — the mock stays a faithful stand-in for the real provider.
+type Mock struct {
+	mu       sync.Mutex
+	dropped  map[string]map[string]struct{} // username → unfollowed pks
+	detached map[string]map[string]struct{} // username → removed follower pks
+}
 
-func NewMock() *Mock { return &Mock{} }
+func NewMock() *Mock {
+	return &Mock{
+		dropped:  map[string]map[string]struct{}{},
+		detached: map[string]map[string]struct{}{},
+	}
+}
 
 func (m *Mock) Login(_ context.Context, username, password string) (*LoginResult, error) {
 	if username == "" || password == "" {
@@ -29,8 +44,8 @@ func (m *Mock) Login(_ context.Context, username, password string) (*LoginResult
 	return &LoginResult{Session: &Session{Username: username, Auth: "mock:" + username}}, nil
 }
 
-func (m *Mock) LoginBySessionID(_ context.Context, sessionID string) (*LoginResult, error) {
-	if sessionID == "" {
+func (m *Mock) LoginBySessionID(_ context.Context, w WebLogin) (*LoginResult, error) {
+	if w.SessionID == "" {
 		return nil, fmt.Errorf("sessionid required")
 	}
 	// Deterministic mock account so the diff features have data.
@@ -65,13 +80,70 @@ func (m *Mock) SubmitChallenge(_ context.Context, s *Session, code string) (*Log
 
 func (m *Mock) Followers(_ context.Context, s *Session) ([]User, error) {
 	// Followers: 60 accounts drawn from id range [0, 80).
-	return m.slice(s.Username, 0, 80, 60), nil
+	return m.without(m.slice(s.Username, 0, 80, 60), m.detached, s.Username), nil
 }
 
 func (m *Mock) Following(_ context.Context, s *Session) ([]User, error) {
 	// Following: 50 accounts drawn from id range [40, 120). Overlap with the
 	// follower range [40,80) creates mutuals; the rest are non-followers/fans.
-	return m.slice(s.Username, 40, 120, 50), nil
+	return m.without(m.slice(s.Username, 40, 120, 50), m.dropped, s.Username), nil
+}
+
+// UserDetail fabricates stable counts from the pk so the list rows have
+// plausible, non-repeating numbers.
+func (m *Mock) UserDetail(_ context.Context, _ *Session, pk string) (*UserDetail, error) {
+	id, err := strconv.Atoi(pk)
+	if err != nil {
+		return nil, fmt.Errorf("invalid pk %q", pk)
+	}
+	u := mockUser(id - 100000)
+	r := rand.New(rand.NewSource(int64(id)))
+	return &UserDetail{
+		PK:             u.PK,
+		Username:       u.Username,
+		FullName:       u.FullName,
+		ProfilePicURL:  u.ProfilePicURL,
+		FollowersCount: 50 + r.Intn(9500),
+		FollowingCount: 40 + r.Intn(2200),
+		MediaCount:     r.Intn(420),
+		IsPrivate:      u.IsPrivate,
+		IsVerified:     u.IsVerified,
+	}, nil
+}
+
+func (m *Mock) Unfollow(_ context.Context, s *Session, pk string) error {
+	m.remember(m.dropped, s.Username, pk)
+	return nil
+}
+
+func (m *Mock) RemoveFollower(_ context.Context, s *Session, pk string) error {
+	m.remember(m.detached, s.Username, pk)
+	return nil
+}
+
+func (m *Mock) remember(set map[string]map[string]struct{}, username, pk string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if set[username] == nil {
+		set[username] = map[string]struct{}{}
+	}
+	set[username][pk] = struct{}{}
+}
+
+func (m *Mock) without(users []User, set map[string]map[string]struct{}, username string) []User {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	gone := set[username]
+	if len(gone) == 0 {
+		return users
+	}
+	out := make([]User, 0, len(users))
+	for _, u := range users {
+		if _, ok := gone[u.PK]; !ok {
+			out = append(out, u)
+		}
+	}
+	return out
 }
 
 // slice deterministically picks `count` distinct users whose ids fall in
