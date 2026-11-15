@@ -261,6 +261,30 @@ export function CollectClient({
             </li>
           </ol>
 
+          <Card tone="sunken" className={styles.mobileGuide}>
+            <h2 className={styles.mobileTitle}>{t.collect.mobileTitle}</h2>
+            <p className={styles.stepText}>{t.collect.mobileLead}</p>
+            <div className={styles.mobileColumns}>
+              <section>
+                <h3 className={styles.mobilePlatform}>{t.collect.mobileIphoneTitle}</h3>
+                <ol className={styles.mobileSteps}>
+                  {t.collect.mobileIphoneSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
+              </section>
+              <section>
+                <h3 className={styles.mobilePlatform}>{t.collect.mobileAndroidTitle}</h3>
+                <ol className={styles.mobileSteps}>
+                  {t.collect.mobileAndroidSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
+              </section>
+            </div>
+            <p className={styles.mobileWarning}>{t.collect.mobileWarning}</p>
+          </Card>
+
           <Card tone="sunken" className={styles.waiting}>
             <Spinner size={16} />
             <div>

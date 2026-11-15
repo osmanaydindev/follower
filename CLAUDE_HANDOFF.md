@@ -95,6 +95,36 @@ chooses to do so.
   characters in the ingest sanitizer (the former 512-character limit silently
   truncated them, causing broken list avatars).
 
+## Next product decision: Follower accounts (approved, not yet implemented)
+
+The owner approved a separate Follower account system. It must offer both:
+
+- email + password registration, with a one-time email verification code before
+  activation; and
+- Google OAuth sign-in.
+
+Its purpose is to let one person see their stored analyses on web and phone.
+Persist an opaque **Follower** web-session token and link analyses/snapshots to
+the Follower user id. Do **not** persist an Instagram session/cookie/token or
+resume server-side Instagram access: new data is always collected by the
+person's currently signed-in browser on `instagram.com`.
+
+This needs a real user store (recommended: PostgreSQL), password hashing,
+verification-code expiry/rate limits, deletion of the user and all associated
+analysis data, plus SMTP and Google OAuth production configuration. Required
+production values are a PostgreSQL connection, SMTP host/port/user/password/
+sender, Google OAuth client id/secret, and the registered callback
+`https://takipanaliz.com/api/auth/google/callback`.
+
+## Mobile bookmarklets
+
+The collection bookmarklet also works on phones when it is saved as a normal
+browser bookmark whose URL is replaced with the copied `javascript:` code.
+`/topla` now has explicit Safari/iPhone and Chrome/Android instructions. It
+must run on the same browser's `instagram.com` page, not inside the Instagram
+app. “Add to Home Screen” is a web shortcut, not a JavaScript bookmarklet, and
+must not be presented as an alternative.
+
 ## Current worktree
 
 The initial collector and the two follow-up fixes above have been committed and
