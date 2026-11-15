@@ -33,9 +33,20 @@ export function CollectClient({
 }) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>({ name: 'idle' });
+  const [bookmarkletHelp, setBookmarkletHelp] = useState(false);
+  const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const submitted = useRef(false);
 
   const href_ = bookmarkletHref(origin, href(locale, 'collect'));
+
+  const copyBookmarklet = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(href_);
+      setCopyState('done');
+    } catch {
+      setCopyState('error');
+    }
+  }, [href_]);
 
   const submit = useCallback(
     async (username: string, followers: unknown[], following: unknown[]) => {
@@ -170,19 +181,28 @@ export function CollectClient({
               <div className={styles.stepBody}>
                 <h2 className={styles.stepTitle}>{t.collect.step1Title}</h2>
                 <p className={styles.stepText}>{t.collect.step1Body}</p>
-                {/* A javascript: URL the user drags to their bookmarks bar —
-                    clicking it here would run the collector on our own page,
-                    where there is no Instagram session, so the click is
-                    swallowed. */}
+                {/* A javascript: URL must run on instagram.com, not here. */}
                 <a
                   className={styles.bookmarklet}
                   href={href_}
-                  onClick={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setBookmarkletHelp(true);
+                  }}
                   draggable
                 >
                   <Icon name="download" size={17} strokeWidth={2} />
                   <span>{t.collect.bookmarkletLabel}</span>
                 </a>
+                {bookmarkletHelp ? (
+                  <Notice tone="info" title={t.collect.bookmarkletClickTitle}>
+                    <p>{t.collect.bookmarkletClickBody}</p>
+                    <Button variant="secondary" size="sm" onClick={() => void copyBookmarklet()}>
+                      {copyState === 'done' ? t.collect.copyDone : t.collect.copyBookmarklet}
+                    </Button>
+                    {copyState === 'error' ? <p>{t.collect.copyFailed}</p> : null}
+                  </Notice>
+                ) : null}
               </div>
             </li>
 
