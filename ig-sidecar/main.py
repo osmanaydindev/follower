@@ -455,6 +455,40 @@ _METHOD_TOKENS = (
 )
 
 
+#: Bloks payloads are a serialised UI tree. We only want the human-readable
+#: labels, to identify WHICH screen Instagram is showing — never the tokens and
+#: identifiers that sit next to them.
+_BLOKS_NOISE = re.compile(
+    r"^(?:[0-9a-f]{8,}|[A-Za-z0-9+/=]{40,}|bk\.|com\.bloks|ig_|\d+(?:\.\d+)?)$"
+)
+
+
+def _bloks_screen_text(payload: Any, limit: int = 14) -> list[str]:
+    """Readable labels out of a Bloks screen, so a log line can say what the user
+    is being shown instead of 'some screen'."""
+    found: list[str] = []
+
+    def walk(node: Any) -> None:
+        if len(found) >= limit:
+            return
+        if isinstance(node, str):
+            s = node.strip()
+            # Labels have spaces or are short words; ids and blobs do not.
+            if 3 <= len(s) <= 120 and not _BLOKS_NOISE.match(s) and any(c.isalpha() for c in s):
+                if " " in s or s.islower() is False:
+                    if s not in found:
+                        found.append(s)
+        elif isinstance(node, dict):
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    walk(payload)
+    return found[:limit]
+
+
 def _probe_2fa_methods(cl: Client) -> list[str]:
     """Ask Instagram which second factors this account actually offers.
 
@@ -503,6 +537,8 @@ def _start_2fa(cl: Client) -> dict[str, Any]:
         f"offered={offered} json_keys={sorted(lj.keys())[:12]} "
         f"error_type={lj.get('error_type')!r}"
     )
+    if "layout" in lj:
+        print(f"[login] bloks ekrani: {_bloks_screen_text(lj)}")
     return {
         "status": "challenge",
         "method": method,
