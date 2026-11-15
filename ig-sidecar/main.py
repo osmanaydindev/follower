@@ -871,8 +871,15 @@ def login(body: LoginBody) -> dict[str, Any]:
     _load_or_create_device(cl, body.username)
     try:
         cl.login(body.username, body.password)
-    except TwoFactorRequired:
+    except TwoFactorRequired as exc:
         # 2FA code needed → keep this client alive and open the code screen.
+        #
+        # Logged because this branch was the blind spot: instagrapi reaches here
+        # after the new CAA flow bounces to the legacy endpoint
+        # (CAA_LOGIN_FALLBACK), and the legacy endpoint is what carries the
+        # typed reason. Without printing it we only saw "2FA required" and kept
+        # guessing at which second factor was meant.
+        print(f"[login] TwoFactorRequired: {type(exc).__name__}: {exc}")
         return _start_2fa(cl)
     except ChallengeRequired:
         # Email/SMS checkpoint. Keep the client; resolution/code happens at /challenge.
@@ -889,6 +896,7 @@ def login(body: LoginBody) -> dict[str, Any]:
         # as 2FA (open the code screen) instead of a flat error — this is exactly the
         # "error before any code arrives" symptom.
         if _is_2fa(cl):
+            print(f"[login] BadPassword -> 2FA sayildi: {type(exc).__name__}: {exc}")
             return _start_2fa(cl)
         # Otherwise it's a genuine bad password OR IG's soft-block. Surface the raw
         # message + hint rather than flatly claiming the password is wrong.
