@@ -36,8 +36,17 @@ export function CollectClient({
   const [bookmarkletHelp, setBookmarkletHelp] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const submitted = useRef(false);
+  const bookmarklet = useRef<HTMLAnchorElement>(null);
 
   const href_ = bookmarkletHref(origin, href(locale, 'collect'));
+
+  // React deliberately replaces javascript: URLs rendered in JSX with a
+  // throwing placeholder. This is an intentional, static bookmarklet, so set
+  // the attribute after hydration instead. It keeps React's general XSS guard
+  // on while allowing the user to drag a real bookmarklet to their browser.
+  useEffect(() => {
+    bookmarklet.current?.setAttribute('href', href_);
+  }, [href_]);
 
   const copyBookmarklet = useCallback(async () => {
     try {
@@ -183,8 +192,9 @@ export function CollectClient({
                 <p className={styles.stepText}>{t.collect.step1Body}</p>
                 {/* A javascript: URL must run on instagram.com, not here. */}
                 <a
+                  ref={bookmarklet}
                   className={styles.bookmarklet}
-                  href={href_}
+                  href="#"
                   onClick={(e) => {
                     e.preventDefault();
                     setBookmarkletHelp(true);
