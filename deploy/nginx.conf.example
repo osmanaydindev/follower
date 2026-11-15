@@ -6,11 +6,13 @@
 #   sudo nginx -t && sudo systemctl reload nginx
 #   sudo certbot --nginx -d <domain> -d www.<domain>
 #
-# Afterwards set COOKIE_SECURE=true in .env and `docker compose up -d web`.
+# Afterwards set SITE_URL and COOKIE_SECURE=true in .env and
+# `docker compose up -d web`.
 #
 # Rules for this server, which hosts several sites behind one nginx:
 #   - never use `default_server`, never touch sites-enabled/default
 #   - never edit another site's config
+#   - always `nginx -t` before reloading, and reload rather than restart
 #   - after reloading, curl every other site to confirm it is still up
 #
 # certbot rewrites this file when it adds TLS; that is expected.
@@ -20,12 +22,14 @@ server {
     listen [::]:80;
     server_name <domain> www.<domain>;
 
-    # Instagram data; keep it out of any shared cache.
-    add_header Cache-Control "no-store" always;
-
     # POST /api/ig/ingest carries both collected lists. A 10k-follower account
     # is a few megabytes of JSON.
     client_max_body_size 16m;
+
+    # Cache-Control is left to the app: Next already marks the panel and the
+    # API no-store, and content-hashed build output immutable. Setting a
+    # blanket header here would override those and make every asset
+    # uncacheable.
 
     location / {
         proxy_pass http://127.0.0.1:3006;
@@ -54,12 +58,5 @@ server {
         proxy_send_timeout    900s;
         proxy_connect_timeout 15s;
         proxy_buffering       off;
-    }
-
-    # Build output is content-hashed and safe to cache hard.
-    location /_next/static/ {
-        proxy_pass http://127.0.0.1:3006;
-        proxy_set_header Host $host;
-        add_header Cache-Control "public, max-age=31536000, immutable" always;
     }
 }
