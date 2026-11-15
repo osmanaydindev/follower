@@ -69,8 +69,23 @@ page without making an Instagram API request. Do not perform a live list
 collection or login test until the account has rested and the user explicitly
 chooses to do so.
 
+## Follow-up fixes after the initial collector release
+
+- Legacy `/tr/giris` and `/en/giris` now return a `307` redirect to the
+  collection page, so old links cannot revive the removed password-login path.
+- React production builds deliberately replace a JSX `javascript:` `href` with
+  a throwing URL. `CollectClient` assigns the generated bookmarklet using
+  `setAttribute` after hydration instead. A bookmark saved before that fix must
+  be deleted and recreated from `/topla`.
+- The collector now first takes the username from the URL when the user runs it
+  on their own Instagram profile (for example, `instagram.com/example/`). This
+  avoids the unreliable extra `/users/{id}/info/` Instagram call. The UI now
+  explicitly tells users to open their own profile before invoking the
+  bookmarklet; it retains the old lookup only as a fallback.
+
 ## Current worktree
 
-All changes are uncommitted. The intentionally removed web password-login
-pages/routes are shown as deletions in `git status`; keep them deleted unless
-the product decision changes.
+The initial collector and the two follow-up fixes above have been committed and
+pushed. The username-from-profile fallback is the only expected pending change
+until it is committed; keep the intentionally removed password-login
+pages/routes deleted unless the product decision changes.

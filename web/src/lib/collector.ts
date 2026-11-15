@@ -88,6 +88,14 @@ function mapUser(u){
 }
 
 async function whoami(){
+  // When the bookmark runs on the user's own profile, the pathname is the
+  // username and costs no request at all. Prefer that over Instagram's
+  // increasingly unreliable /users/{id}/info/ endpoint.
+  var part = location.pathname.replace(/^\\/+|\\/+$/g, '').split('/')[0] || '';
+  var reserved = ['accounts','direct','explore','p','reel','reels','stories'];
+  if (/^[a-zA-Z0-9._]{1,30}$/.test(part) && reserved.indexOf(part.toLowerCase()) === -1) {
+    return part;
+  }
   try {
     var r = await fetch('/api/v1/users/' + uid + '/info/', {
       credentials:'include', headers:{'x-ig-app-id': APP_ID}
@@ -131,7 +139,7 @@ async function fetchList(kind){
   try {
     var username = await whoami();
     if (!username) {
-      send({type:'error', message:'Instagram kullanici adi okunamadi. Lutfen ana sayfada tekrar deneyin.'});
+      send({type:'error', message:'Instagram kullanici adi okunamadi. Kendi profil sayfanizi acip yer imine tekrar tiklayin.'});
       return;
     }
     send({type:'hello', username: username});
