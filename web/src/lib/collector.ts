@@ -30,10 +30,13 @@
 
 const WEB_APP_ID = '936619743392459';
 const PAGE_SIZE = 50;
-const PAGE_DELAY_MS: [number, number] = [2500, 5000];
-const PAGES_PER_REST = 5;
-const REST_MS: [number, number] = [20000, 40000];
-const BETWEEN_LISTS_MS: [number, number] = [4000, 8000];
+// Still strictly sequential (and still stops at the first 429), but tuned down
+// from the first cautious launch after real-world collection times proved too
+// slow for normal-size accounts.
+const PAGE_DELAY_MS: [number, number] = [2000, 4000];
+const PAGES_PER_REST = 6;
+const REST_MS: [number, number] = [20000, 30000];
+const BETWEEN_LISTS_MS: [number, number] = [3000, 6000];
 // A normal list page answers in seconds.  Never leave a user-facing collector
 // spinning forever if Instagram holds a request open without returning a
 // status; an aborted request is deliberately not retried.

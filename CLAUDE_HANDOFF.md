@@ -20,7 +20,7 @@ The web flow is now browser-only:
    compares and stores the lists. It receives no Instagram credential.
 
 The collector is deliberately sequential and paced: 50 items/page, 2.5–5 s
-between pages, 20–40 s after every fifth page, and 4–8 s between the two lists.
+between pages, 20–30 s after every sixth page, and 3–6 s between the two lists.
 It stops rather than retries after 429/401/403.
 
 ## Files and responsibilities
@@ -53,6 +53,10 @@ mode. It shows a truthful limitation notice instead.
 - Updated the landing, FAQ, privacy, terms, and UI wording to say that the
   service never asks for or receives an Instagram password/session cookie.
 - Removed unused web login/challenge client types and API methods.
+- After observing a normal-size account's collection time, the browser pacing
+  was modestly shortened: 2–4 seconds between pages, a 20–30 second rest after
+  every sixth page, and 3–6 seconds between the two lists. It remains strictly
+  serial and treats the first 429/401/403 as a terminal result—never retry.
 
 ## Verification completed
 
