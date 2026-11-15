@@ -82,6 +82,11 @@ chooses to do so.
   avoids the unreliable extra `/users/{id}/info/` Instagram call. The UI now
   explicitly tells users to open their own profile before invoking the
   bookmarklet; it retains the old lookup only as a fallback.
+- Each Instagram list-page request has a 90-second timeout. A held request is
+  aborted and reported as a stopped collection; it is never retried. This is
+  important because the progress bar is intentionally indeterminate without
+  known follower/following totals, so a stuck network request could otherwise
+  look like normal pacing forever.
 
 ## Current worktree
 

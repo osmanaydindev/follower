@@ -34,6 +34,10 @@ const PAGE_DELAY_MS: [number, number] = [2500, 5000];
 const PAGES_PER_REST = 5;
 const REST_MS: [number, number] = [20000, 40000];
 const BETWEEN_LISTS_MS: [number, number] = [4000, 8000];
+// A normal list page answers in seconds.  Never leave a user-facing collector
+// spinning forever if Instagram holds a request open without returning a
+// status; an aborted request is deliberately not retried.
+const REQUEST_TIMEOUT_MS = 90_000;
 
 export type CollectPhase = 'followers' | 'following';
 
@@ -70,10 +74,30 @@ var ORIGIN = ${JSON.stringify(targetOrigin)};
 var APP_ID = ${JSON.stringify(WEB_APP_ID)};
 var PAGE_SIZE = ${PAGE_SIZE};
 var PAGES_PER_REST = ${PAGES_PER_REST};
+var REQUEST_TIMEOUT_MS = ${REQUEST_TIMEOUT_MS};
 
 function send(m){ m.kind='follower-collect'; try{ win.postMessage(m, ORIGIN); }catch(e){} }
 function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 function jitter(a,b){ return a + Math.random()*(b-a); }
+
+async function request(url){
+  var controller = new AbortController();
+  var timeout = setTimeout(function(){ controller.abort(); }, REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, {
+      credentials:'include',
+      headers:{'x-ig-app-id': APP_ID, 'x-requested-with':'XMLHttpRequest'},
+      signal: controller.signal
+    });
+  } catch (e) {
+    if (controller.signal.aborted) {
+      throw new Error('Instagram sayfayi 90 saniye icinde yanitlamadi. Toplama durduruldu; lutfen daha sonra yeniden deneyin.');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 // Field names match the Go User struct so the backend needs no translation.
 function mapUser(u){
@@ -110,10 +134,7 @@ async function fetchList(kind){
   while (true) {
     var url = '/api/v1/friendships/' + uid + '/' + kind + '/?count=' + PAGE_SIZE +
       (next ? '&max_id=' + encodeURIComponent(next) : '');
-    var res = await fetch(url, {
-      credentials:'include',
-      headers:{'x-ig-app-id': APP_ID, 'x-requested-with':'XMLHttpRequest'}
-    });
+    var res = await request(url);
     // A refusal ends the run. Retrying through a rate limit is what makes it
     // last longer, and it is how an account got flagged here before.
     if (res.status === 429) { send({type:'throttled', message:'Instagram istekleri sinirladi (429).'}); return null; }
