@@ -1,0 +1,118 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  max-width: 44rem;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.lead {
+  font-size: var(--fs-md);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding-block: var(--sp-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.no {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--accent-fill);
+  color: var(--text-on-fill);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stepBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.stepTitle {
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.stepText {
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+/* Looks like a button, but it is a link the user drags. The cursor says grab
+   so the gesture is discoverable without reading the instruction. */
+.bookmarklet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 2.75rem;
+  margin-top: var(--sp-2);
+  padding-inline: var(--sp-5);
+  border-radius: var(--r-pill);
+  background: var(--accent-fill);
+  color: var(--text-on-fill);
+  font-weight: 650;
+  cursor: grab;
+  box-shadow: var(--shadow-1);
+}
+
+.bookmarklet:hover {
+  text-decoration: none;
+  background: var(--accent-fill-hover);
+}
+
+.bookmarklet:active {
+  cursor: grabbing;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 2.75rem;
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+
+.waiting {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.waitingTitle {
+  font-weight: 650;
+}
+
+.done {
+  align-items: center;
+  text-align: center;
+  color: var(--success);
+}

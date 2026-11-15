@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Where a rejected session is sent. The cookie has to be *deleted*, not merely
- * ignored: the panel redirects to sign-in when the backend returns 401, and the
- * sign-in page redirects an already-signed-in visitor to the panel — so leaving
+ * ignored: the panel redirects to collection when the backend returns 401, and
+ * the collection page redirects an already-signed-in visitor to the panel — so leaving
  * a dead cookie in place bounces the two off each other forever and the user
  * sees a blank page with no way out.
  *
@@ -23,7 +23,7 @@ export function GET(req: NextRequest): Response {
   // to http, which a Secure cookie would not survive.
   const res = new NextResponse(null, {
     status: 307,
-    headers: { Location: `${href(locale, 'login')}?expired=1` },
+    headers: { Location: `${href(locale, 'collect')}?expired=1` },
   });
   clearSession(res);
   return res;

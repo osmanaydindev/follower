@@ -4,7 +4,7 @@ import { href, type Dict, type Locale } from '@/lib/i18n';
 import styles from './TrustSection.module.css';
 
 const icons: Record<string, IconName | undefined> = {
-  password: 'lock',
+  browser: 'lock',
   protect: 'shield',
   control: 'check',
   data: 'eyeOff',
@@ -19,11 +19,11 @@ const tones: Record<string, string | undefined> = {
 /**
  * The reassurance section. It is as prominent as the feature grid because the
  * two things someone weighing up an app like this actually wants to know are
- * what happens to their password and what happens to their account.
+ * what happens in their browser and what happens to their account.
  *
  * It states the protective measures first and the one honest caveat — that
- * Instagram may ask for a verification code — in the calm place it belongs
- * (the FAQ and the sign-in screen), rather than leading with alarm.
+ * The browser's existing Instagram session is the boundary: the website never
+ * asks for or receives an Instagram password.
  */
 export function TrustSection({ locale, t }: { locale: Locale; t: Dict }) {
   return (

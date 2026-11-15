@@ -5,7 +5,7 @@
  *
  * Status codes are forwarded verbatim, because they carry meaning the UI acts on
  * (`backend/internal/instagram/errors.go`):
- *   401 — the Instagram session is dead, sign in again
+ *   401 — the Instagram session is dead, collect again from the browser
  *   403 — the session is waiting on a challenge
  *   429 — Instagram rate-limited us; park, do not retry
  *   502 — our side (or the sidecar) is broken

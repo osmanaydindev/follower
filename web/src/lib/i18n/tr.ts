@@ -12,9 +12,8 @@ export const tr = {
   meta: {
     title: 'Follower — Instagram takipçi analizi',
     description:
-      'Sizi geri takip etmeyenleri, hayranlarınızı ve karşılıklı takipleşmelerinizi sade bir ekranda görün. Şifreniz saklanmaz, verileriniz satılmaz.',
+      'Sizi geri takip etmeyenleri, hayranlarınızı ve karşılıklı takipleşmelerinizi sade bir ekranda görün. Instagram şifrenizi hiç istemeyiz; verileriniz satılmaz.',
     panelTitle: 'Panel — Follower',
-    loginTitle: 'Giriş — Follower',
   },
 
   common: {
@@ -74,12 +73,12 @@ export const tr = {
       {
         key: 'notBack',
         title: 'Geri takip etmeyenler',
-        body: 'Takip ettiğiniz hâlde sizi takip etmeyen hesaplar. Dilerseniz tek tek takibi bırakabilirsiniz.',
+        body: 'Takip ettiğiniz hâlde sizi takip etmeyen hesaplar.',
       },
       {
         key: 'fans',
         title: 'Hayranlarınız',
-        body: 'Sizi takip eden ama sizin takip etmediğiniz hesaplar. İsterseniz takipçilerinizden çıkarabilirsiniz.',
+        body: 'Sizi takip eden ama sizin takip etmediğiniz hesaplar.',
       },
       {
         key: 'mutuals',
@@ -101,10 +100,10 @@ export const tr = {
       'Verilerinizle ne yaptığımızı da, ne yapmadığımızı da açıkça yazıyoruz. Bu bölümü okumadan devam etmenizi beklemiyoruz.',
     items: [
       {
-        key: 'password',
+        key: 'browser',
         tone: 'success',
-        title: 'Şifreniz bizde kalmaz',
-        body: 'Şifreniz yalnızca giriş isteğinin gönderildiği an kullanılır ve hemen ardından bellekten silinir. Diskte, veritabanında veya kayıtlarda hiçbir yerde tutulmaz; elimizde kalan tek şey Instagram’ın verdiği oturum anahtarıdır.',
+        title: 'Instagram şifrenizi hiç istemeyiz',
+        body: 'Listeler, tarayıcınızda zaten açık olan Instagram oturumunda okunur. Şifreniz, Instagram oturum çerezi veya hesabınıza ait bir giriş anahtarı sunucumuza gelmez.',
       },
       {
         key: 'protect',
@@ -116,7 +115,7 @@ export const tr = {
         key: 'control',
         tone: 'success',
         title: 'Sizin yerinize hiçbir şey yapmayız',
-        body: 'Adınıza gönderi paylaşmaz, mesaj göndermez, kimseyi takip etmeyiz. Takibi bırakma ve takipçi çıkarma işlemleri yalnızca siz onayladığınızda, tek tek yapılır.',
+        body: 'Adınıza gönderi paylaşmaz, mesaj göndermez, kimseyi takip etmeyiz. Bu ilk sürüm yalnızca listeleri okur ve karşılaştırır.',
       },
       {
         key: 'data',
@@ -197,12 +196,12 @@ export const tr = {
     title: 'Sık sorulanlar',
     items: [
       {
-        q: 'Şifrem sizde saklanıyor mu?',
-        a: 'Hayır. Şifreniz yalnızca giriş isteği gönderilirken kullanılır ve hemen ardından silinir; hiçbir yere yazılmaz. Sakladığımız tek şey Instagram’ın girişten sonra verdiği oturum anahtarıdır, onu da “Çıkış yap” dediğiniz anda sileriz.',
+        q: 'Instagram şifrem sizden geçiyor mu?',
+        a: 'Hayır. Instagram’a tarayıcınızdan kendiniz giriş yaparsınız. Yer imi, listeleri o açık oturumda okur; şifreniz ve Instagram oturum çerezi bize hiç gönderilmez.',
       },
       {
         q: 'Hesabım için bir risk var mı?',
-        a: 'Hesap kapanmasıyla karşılaşmadık. Instagram zaman zaman alışılmadık bir konumdan bağlanıldığını görüp bir doğrulama kodu isteyebilir; bu normal bir güvenlik adımıdır ve akış kodu girdikten sonra devam eder. Bunu en aza indirmek için isteklerimizi yavaş, aralıklı ve sırayla gönderir, Instagram bizi yavaşlattığında ısrar etmeyiz.',
+        a: 'Her Instagram isteği kendi tarayıcınızdan ve kendi bağlantınızdan gider; sunucumuz hesabınıza giriş yapmaz. Instagram yine de kullanımı sınırlayabilir. Bunun ihtimalini azaltmak için sayfaları yavaş, aralıklı ve sırayla alır; sınır görünürse dururuz.',
       },
       {
         q: 'Analiz neden bir iki dakika sürüyor?',
@@ -210,11 +209,11 @@ export const tr = {
       },
       {
         q: 'İki aşamalı doğrulama kullanıyorum, çalışır mı?',
-        a: 'Evet. Giriş sırasında kod istenirse aynı ekranda kodu girersiniz, akış oradan kesintisiz devam eder.',
+        a: 'Evet. İki aşamalı doğrulama Instagram girişinizin parçasıdır; instagram.com’da normal biçimde tamamladıktan sonra yer imini kullanabilirsiniz.',
       },
       {
         q: 'Benim adıma bir işlem yapılıyor mu?',
-        a: 'Hayır. Gönderi paylaşmaz, mesaj göndermez, kimseyi takip etmeyiz. Takibi bırakma ve takipçi çıkarma işlemleri yalnızca siz onay kutusunu onayladığınızda, tek tek gerçekleşir.',
+        a: 'Hayır. Gönderi paylaşmaz, mesaj göndermez, kimseyi takip etmeyiz. Bu sürümde herhangi bir hesap işlemi de yoktur; yalnızca listeler okunur ve karşılaştırılır.',
       },
       {
         q: 'Verilerimi nasıl sildirebilirim?',
@@ -233,34 +232,6 @@ export const tr = {
     disclaimer:
       'Follower, Instagram veya Meta ile ilişkili değildir ve onlar tarafından onaylanmamıştır. Yalnızca kendi hesabınızın verisini analiz eder.',
     rights: 'Tüm hakları saklıdır.',
-  },
-
-  login: {
-    title: 'Instagram ile giriş',
-    subtitle:
-      'Kendi hesabınızın takipçi verisini analiz edebilmemiz için Instagram hesabınıza giriş yapmanız gerekiyor.',
-    username: 'Kullanıcı adı',
-    usernamePlaceholder: 'kullaniciadi',
-    password: 'Şifre',
-    showPassword: 'Şifreyi göster',
-    hidePassword: 'Şifreyi gizle',
-    submit: 'Giriş yapın ve analiz edin',
-    submitting: 'Giriş yapılıyor…',
-    missing: 'Kullanıcı adı ve şifre gereklidir.',
-    riskTitle: 'Girişten önce bilmeniz gerekenler',
-    riskItems: [
-      'Şifreniz yalnızca bu giriş isteği için kullanılır ve hiçbir yere kaydedilmez.',
-      'Instagram zaman zaman bir doğrulama kodu isteyebilir. Bu normal bir güvenlik adımıdır; kodu bir sonraki ekranda girersiniz.',
-      'Bir kez giriş yapmanız yeterlidir. Sonuçlarınız saklanır, gerektiğinde yeniden analiz edebilirsiniz.',
-    ],
-    challengeTitle: 'Doğrulama kodu',
-    challengeSubtitle:
-      'Instagram size bir kod gönderdi (uygulama, e-posta veya SMS yoluyla). Kodu aşağıya girin.',
-    code: 'Kod',
-    verify: 'Doğrulayın',
-    verifying: 'Doğrulanıyor…',
-    codeMissing: 'Lütfen kodu girin.',
-    startOver: 'Baştan başlayın',
   },
 
   panel: {
@@ -333,12 +304,39 @@ export const tr = {
     blockedNotice:
       'Instagram bu işlemleri geçici olarak sınırladı. Düğmeler {m} dakika boyunca kapalı kalacak; bu sürede denememek en iyisi.',
     errorNetwork: 'Sunucuya şu anda ulaşılamıyor. Bağlantınızı kontrol edip tekrar deneyin.',
-    errorSession: 'Instagram oturumunuz geçerliliğini yitirmiş. Lütfen yeniden giriş yapın.',
+    errorSession: 'Instagram oturumunuz geçerliliğini yitirmiş. instagram.com’da tekrar giriş yapıp toplamayı yeniden başlatın.',
     errorThrottled: 'Instagram istekleri sınırladı. 15 dakika sonra tekrar deneyebilirsiniz.',
     errorEmpty:
       'Instagram boş bir liste döndürdü. Bu bir aktarım hatası; kaydetmiyoruz, aksi hâlde bir sonraki analizde herkes sizi bırakmış gibi görünürdü.',
     errorGeneric: 'Analiz tamamlanamadı.',
-    sessionExpired: 'Oturumunuzun süresi dolmuş. Lütfen yeniden giriş yapın.',
+    sessionExpired: 'Oturumunuzun süresi dolmuş. Toplamayı yeniden başlatın.',
+  },
+
+  collect: {
+    title: 'Tarayıcınızdan toplayın',
+    lead: 'Listeleriniz Instagram’da açık olan kendi oturumunuzda, kendi bağlantınız üzerinden okunur. Sunucumuz Instagram’a hiç bağlanmaz.',
+    whyTitle: 'Neden böyle',
+    why: 'Instagram, sunucu üzerinden yapılan şifreli girişleri artık kabul etmiyor. Tarayıcınızda zaten açık olan oturumu kullanmak hem çalışıyor hem de hesabınız için en az riskli yol: istekler sizin bilgisayarınızdan, sizin bağlantınızla gidiyor.',
+    step1Title: '1. Düğmeyi yer imlerinize sürükleyin',
+    step1Body: 'Aşağıdaki düğmeyi tarayıcınızın yer imi çubuğuna sürükleyin. Çubuk görünmüyorsa Cmd+Shift+B (Windows’ta Ctrl+Shift+B) ile açabilirsiniz.',
+    bookmarkletLabel: 'Takip Analizi',
+    step2Title: '2. Instagram’ı açın',
+    step2Body: 'Yeni bir sekmede instagram.com adresine gidin ve giriş yapmış olduğunuzdan emin olun.',
+    step3Title: '3. Yer imine tıklayın',
+    step3Body: 'Instagram açıkken yer imine tıklayın. Toplama başlar ve bu sayfa kendiliğinden güncellenir.',
+    openInstagram: 'Instagram’ı yeni sekmede aç',
+    waitingTitle: 'Yer iminden veri bekleniyor',
+    waitingBody: 'Bu sekmeyi açık bırakın. Instagram sekmesinde yer imine tıkladığınızda ilerleme burada görünecek.',
+    collectingFollowers: 'Takipçiler alınıyor',
+    collectingFollowing: 'Takip edilenler alınıyor',
+    savingTitle: 'Sonuçlar hesaplanıyor',
+    patience: 'Listeler sayfa sayfa ve aralarında beklenerek alınıyor. Bu yavaşlık, hesabınızın gereksiz yere işaretlenmemesi için bilinçli olarak var. Instagram sekmesini kapatmayın.',
+    doneTitle: 'Toplama tamamlandı',
+    goPanel: 'Sonuçları görün',
+    errorAuth: 'Instagram oturumu görünmüyor. instagram.com’da giriş yapıp yer imine tekrar tıklayın.',
+    errorThrottled: 'Instagram istekleri sınırladı. Bir süre bekleyip tekrar deneyin; ısrar etmek süreyi uzatır.',
+    limitsTitle: 'Bu yolda neler çalışmıyor',
+    limitsBody: 'Listeler ve sayılar eksiksiz gelir. Satır başına gönderi/takipçi sayıları ile listeden takipten çıkma işlemleri bu sürümde kapalı — onlar sunucunun Instagram’a istek atmasını gerektiriyor, yani çalışmayan yolu.',
   },
 
   viewers: {
@@ -372,7 +370,7 @@ export const tr = {
         heading: 'Neleri topluyoruz',
         body: [
           'Instagram kullanıcı adınızı.',
-          'Instagram’ın girişten sonra verdiği oturum anahtarını. Şifrenizi değil — şifreniz yalnızca giriş isteği sırasında kullanılır ve o istekten hemen sonra bellekten silinir; hiçbir yere yazılmaz.',
+          'Instagram kullanıcı adı ve sonuçları açabilmeniz için teknik web oturumu çerezi. Instagram şifrenizi veya Instagram oturum çerezinizi hiç almayız.',
           'En son analizinizdeki takipçi listenizin bir kopyasını (kullanıcı adı, görünen ad, profil fotoğrafı adresi ve hesap numarası). “Sizi kim takipten çıktı” sorusunu ancak önceki listeyle karşılaştırarak cevaplayabildiğimiz için saklıyoruz.',
         ],
       },
@@ -388,13 +386,13 @@ export const tr = {
         heading: 'Veriler nerede tutuluyor',
         body: [
           'Veriler, kiraladığımız bir sunucudaki dosyalarda tutuluyor. Bulut depolama veya üçüncü taraf bir veritabanı hizmeti kullanılmıyor.',
-          'Oturum anahtarları ve takipçi listesi kopyaları, yalnızca sunucu kullanıcısının okuyabileceği izinlerle yazılıyor.',
+          'Takipçi listesi kopyaları, yalnızca sunucu kullanıcısının okuyabileceği izinlerle yazılıyor.',
         ],
       },
       {
         heading: 'Veriler ne kadar süre kalıyor',
         body: [
-          'Oturum: “Çıkış yap” dediğiniz anda silinir. Hiçbir şey yapmazsanız 60 gün sonra kendiliğinden geçersiz olur.',
+          'Web oturumu: “Çıkış yap” dediğiniz anda silinir. Hiçbir şey yapmazsanız 60 gün sonra kendiliğinden geçersiz olur.',
           'Takipçi listesi kopyası: bir sonraki analizde üzerine yazılır; talebiniz üzerine tamamen silinir.',
         ],
       },
@@ -431,7 +429,7 @@ export const tr = {
       {
         heading: 'Yapılmaması gerekenler',
         body: [
-          'Size ait olmayan bir hesapla giriş yapmak.',
+          'Size ait olmayan, tarayıcınızda açık olmayan bir hesabı analiz etmeye çalışmak.',
           'Hizmeti otomatik araçlarla yormak veya toplu takip/takipten çıkma işlemleri için kullanmak.',
           'Elde ettiğiniz listeleri taciz veya istenmeyen ileti amacıyla kullanmak.',
         ],

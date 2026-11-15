@@ -59,13 +59,6 @@ export type LoginResponse = {
   profile: Profile | null;
 };
 
-/** What the web login route hands back; the session id stays server-side. */
-export type WebLoginResult = {
-  challenge: boolean;
-  username: string;
-  profile: Profile | null;
-};
-
 export type ListKind =
   | 'mutuals'
   | 'notFollowingBack'

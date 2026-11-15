@@ -39,7 +39,7 @@ export function Nav({ locale, t, signedIn }: { locale: Locale; t: Dict; signedIn
             lightLabel={t.common.themeLight}
             darkLabel={t.common.themeDark}
           />
-          <LinkButton href={href(locale, signedIn ? 'panel' : 'login')} size="sm">
+          <LinkButton href={href(locale, signedIn ? 'panel' : 'collect')} size="sm">
             {signedIn ? t.nav.panel : t.nav.analyze}
           </LinkButton>
         </div>

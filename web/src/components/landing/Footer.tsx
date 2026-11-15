@@ -21,7 +21,7 @@ export function Footer({ locale, t }: { locale: Locale; t: Dict }) {
                 <Link href={href(locale, 'install')}>{t.nav.install}</Link>
               </li>
               <li>
-                <Link href={href(locale, 'login')}>{t.nav.analyze}</Link>
+                <Link href={href(locale, 'collect')}>{t.nav.analyze}</Link>
               </li>
             </ul>
           </div>

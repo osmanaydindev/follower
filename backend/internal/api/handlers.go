@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"follower/backend/internal/analysis"
@@ -50,6 +51,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/profile", s.profile)
 	mux.HandleFunc("GET /api/analysis", s.analysis)
 	mux.HandleFunc("GET /api/last-analysis", s.lastAnalysis)
+	mux.HandleFunc("POST /api/collect-session", s.collectSession)
 	mux.HandleFunc("POST /api/ingest", s.ingest)
 	mux.HandleFunc("GET /api/followers", s.followers)
 	mux.HandleFunc("GET /api/following", s.following)
@@ -307,6 +309,35 @@ func (s *Server) snapshotForget(w http.ResponseWriter, r *http.Request) {
 	}
 	s.snaps.Forget(entry.Session.Username, req.PK)
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
+type collectSessionReq struct {
+	Username string `json:"username"`
+}
+
+// collectSession opens a session that holds no Instagram credentials.
+//
+// It exists for the browser-collector path: the lists are paginated by the
+// user's own signed-in browser and arrive through /api/ingest, so the server
+// never needs to authenticate against Instagram at all. All a session has to
+// carry here is the account name, which is the key the follower snapshot is
+// stored under.
+//
+// Session.Auth stays empty on purpose. Every endpoint that would actually call
+// Instagram goes through the provider with that blob and will fail — which is
+// correct: on this path those endpoints have no business working.
+func (s *Server) collectSession(w http.ResponseWriter, r *http.Request) {
+	var req collectSessionReq
+	if !decode(w, r, &req) {
+		return
+	}
+	username := strings.TrimSpace(req.Username)
+	if username == "" {
+		writeErr(w, http.StatusBadRequest, "username is required")
+		return
+	}
+	id := s.sessions.Put(&session.Entry{Session: &instagram.Session{Username: username}})
+	writeJSON(w, http.StatusOK, map[string]any{"sessionId": id, "username": username})
 }
 
 func (s *Server) ingest(w http.ResponseWriter, r *http.Request) {

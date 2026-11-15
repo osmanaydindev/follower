@@ -31,7 +31,7 @@ export function fill(template: string, values: Record<string, string | number>):
 const paths = {
   tr: {
     home: '/tr',
-    login: '/tr/giris',
+    collect: '/tr/topla',
     panel: '/tr/panel',
     install: '/tr/kurulum',
     viewers: '/tr/profil-goruntuleme',
@@ -41,7 +41,7 @@ const paths = {
   },
   en: {
     home: '/en',
-    login: '/en/giris',
+    collect: '/en/topla',
     panel: '/en/panel',
     install: '/en/kurulum',
     viewers: '/en/profil-goruntuleme',

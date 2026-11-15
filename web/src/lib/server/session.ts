@@ -4,6 +4,7 @@ import type { NextResponse } from 'next/server';
 export const SESSION_COOKIE = 'fsid';
 export const PENDING_COOKIE = 'fpend';
 export const USER_COOKIE = 'fuser';
+export const MODE_COOKIE = 'fmode';
 export const LANG_COOKIE = 'flang';
 
 // Matches the backend's own session TTL (`session.Store`, 60 days) — a cookie
@@ -61,6 +62,27 @@ export function writeUsername(res: CookieWriter, username: string): void {
   });
 }
 
+/**
+ * Marks the session as collector-made: it carries no Instagram credential, so
+ * anything that would call Instagram (per-row counts, unfollowing, a re-analysis
+ * from the server) is not available and the panel must say so rather than
+ * offering buttons that cannot work.
+ */
+export function writeCollectMode(res: CookieWriter): void {
+  res.cookies.set(MODE_COOKIE, 'collect', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: secure(),
+    path: '/',
+    maxAge: MAX_AGE,
+  });
+}
+
+export async function readCollectMode(): Promise<boolean> {
+  const jar = await cookies();
+  return jar.get(MODE_COOKIE)?.value === 'collect';
+}
+
 export function clearPending(res: CookieWriter): void {
   res.cookies.set(PENDING_COOKIE, '', { path: '/', maxAge: 0 });
 }
@@ -68,6 +90,7 @@ export function clearPending(res: CookieWriter): void {
 export function clearSession(res: CookieWriter): void {
   res.cookies.set(SESSION_COOKIE, '', { path: '/', maxAge: 0, httpOnly: true });
   res.cookies.set(USER_COOKIE, '', { path: '/', maxAge: 0 });
+  res.cookies.set(MODE_COOKIE, '', { path: '/', maxAge: 0 });
   clearPending(res);
 }
 

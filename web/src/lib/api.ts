@@ -1,4 +1,4 @@
-import type { Analysis, Profile, User, UserDetail, WebLoginResult } from './types';
+import type { Analysis, Profile, User, UserDetail } from './types';
 
 /**
  * The browser only ever talks to our own origin. `/api/ig/*` and `/api/auth/*`
@@ -8,7 +8,7 @@ import type { Analysis, Profile, User, UserDetail, WebLoginResult } from './type
  * Status semantics are the backend's, deliberately identical to the mobile
  * client (`mobile/src/api.ts`):
  *   0   — server unreachable; keep the session, this is not a rejection
- *   401 — Instagram session dead -> sign in again
+ *   401 — Instagram session dead -> collect again from the browser
  *   403 — session is waiting on a challenge
  *   429 — rate-limited -> park for THROTTLE_COOLDOWN_MS, never retry
  */
@@ -78,15 +78,6 @@ async function request<T>(path: string, init: RequestInitLite = {}): Promise<T> 
 }
 
 export const api = {
-  login(username: string, password: string) {
-    return request<WebLoginResult>('/api/auth/login', {
-      method: 'POST',
-      body: { username, password },
-    });
-  },
-  challenge(code: string) {
-    return request<WebLoginResult>('/api/auth/challenge', { method: 'POST', body: { code } });
-  },
   logout() {
     return request<{ ok: boolean }>('/api/auth/logout', { method: 'POST' });
   },

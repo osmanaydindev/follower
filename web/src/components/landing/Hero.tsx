@@ -19,7 +19,7 @@ export function Hero({ locale, t, signedIn }: { locale: Locale; t: Dict; signedI
           </h1>
           <p className={styles.subtitle}>{t.hero.subtitle}</p>
           <div className={styles.ctas}>
-            <LinkButton href={href(locale, signedIn ? 'panel' : 'login')} size="lg">
+            <LinkButton href={href(locale, signedIn ? 'panel' : 'collect')} size="lg">
               <span>{signedIn ? t.nav.panel : t.hero.cta}</span>
               <Icon name="arrowRight" size={18} strokeWidth={2} />
             </LinkButton>

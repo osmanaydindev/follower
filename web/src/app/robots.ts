@@ -15,7 +15,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/tr/panel', '/en/panel', '/tr/giris', '/en/giris', '/api/'],
+      disallow: ['/tr/panel', '/en/panel', '/tr/topla', '/en/topla', '/api/'],
     },
     ...(site ? { sitemap: `${site}/sitemap.xml` } : {}),
   };

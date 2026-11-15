@@ -9,7 +9,7 @@ import { ProfileHeader, type StatTarget } from './ProfileHeader';
 import { SummaryCard, type CardTone } from './SummaryCard';
 import { Tabs, type TabItem } from './Tabs';
 import { UserList } from './UserList';
-import { Button } from '../ui/Button';
+import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Icon, type IconName } from '../ui/Icon';
 import { LocaleSwitch } from '../ui/LocaleSwitch';
@@ -62,6 +62,7 @@ export function PanelClient({
   profile: initialProfile,
   username,
   backendDown,
+  collectMode,
 }: {
   locale: Locale;
   t: Dict;
@@ -69,6 +70,7 @@ export function PanelClient({
   username: string;
   /** The page loaded but the backend could not be reached — do not sign out. */
   backendDown: boolean;
+  collectMode: boolean;
 }) {
   const router = useRouter();
   const [profile, setProfile] = useState(initialProfile);
@@ -243,6 +245,26 @@ export function PanelClient({
     [applyAction],
   );
 
+  /**
+   * On the collector path there is no credential to read a profile with, so the
+   * header is built from what the collection itself reports. Posts and the
+   * picture are genuinely unknown here and are left out rather than faked.
+   */
+  const headerProfile: Profile | null = useMemo(() => {
+    if (profile) return profile;
+    if (!analysis || !username) return null;
+    return {
+      username,
+      fullName: '',
+      profilePicUrl: '',
+      followersCount: analysis.followersCount,
+      followingCount: analysis.followingCount,
+      mediaCount: 0,
+      isPrivate: false,
+      isVerified: false,
+    };
+  }, [profile, analysis, username]);
+
   const followingPks = useMemo(
     () => new Set((analysis?.following ?? []).map((u) => u.pk)),
     [analysis],
@@ -349,8 +371,8 @@ export function PanelClient({
         {backendDown ? <Notice tone="warning" title={t.panel.errorNetwork} role="status" /> : null}
 
         <Card className={styles.hero}>
-          {profile ? (
-            <ProfileHeader profile={profile} locale={locale} t={t} onStat={onStat} />
+          {headerProfile ? (
+            <ProfileHeader profile={headerProfile} locale={locale} t={t} onStat={onStat} />
           ) : (
             <p className={styles.heroFallback}>@{username}</p>
           )}
@@ -379,11 +401,17 @@ export function PanelClient({
                 {t.panel.cooldownReason}
               </Notice>
             ) : null}
-            <Button size="lg" onClick={() => void analyze()} disabled={cooling}>
-              {cooling
-                ? fill(t.panel.cooldown, { m: minutesLeft(cooldownUntil!) })
-                : t.panel.analyze}
-            </Button>
+            {collectMode ? (
+              <LinkButton href={href(locale, 'collect')} size="lg">
+                {t.collect.title}
+              </LinkButton>
+            ) : (
+              <Button size="lg" onClick={() => void analyze()} disabled={cooling}>
+                {cooling
+                  ? fill(t.panel.cooldown, { m: minutesLeft(cooldownUntil!) })
+                  : t.panel.analyze}
+              </Button>
+            )}
           </Card>
         ) : null}
 
@@ -395,6 +423,12 @@ export function PanelClient({
                   ? `${t.panel.lastUpdated}: ${fmtDateTime(lastUpdated, locale)}`
                   : t.panel.summaryTitle}
               </p>
+              {collectMode ? (
+                <LinkButton href={href(locale, 'collect')} variant="outlineAccent" size="sm">
+                  <Icon name="refresh" size={15} strokeWidth={2} />
+                  <span>{t.panel.reanalyze}</span>
+                </LinkButton>
+              ) : (
               <Button
                 variant="outlineAccent"
                 size="sm"
@@ -412,6 +446,7 @@ export function PanelClient({
                     : t.panel.reanalyze}
                 </span>
               </Button>
+              )}
             </div>
 
             {error ? (
@@ -423,6 +458,12 @@ export function PanelClient({
             {blocked ? (
               <Notice tone="warning" role="status">
                 {fill(t.panel.blockedNotice, { m: minutesLeft(blockedUntil!) })}
+              </Notice>
+            ) : null}
+
+            {collectMode ? (
+              <Notice tone="info" title={t.collect.limitsTitle}>
+                {t.collect.limitsBody}
               </Notice>
             ) : null}
 
@@ -488,7 +529,7 @@ export function PanelClient({
                   locale={locale}
                   t={t}
                   followingPks={followingPks}
-                  blocked={blocked}
+                  blocked={blocked || collectMode}
                   detailsEnabled={
                     !analyzing &&
                     (platform().lists[tab].stats || platform().lists[tab].refreshAvatar)

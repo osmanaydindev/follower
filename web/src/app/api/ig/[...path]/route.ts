@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { callBackend, failResponse } from '@/lib/server/backend';
-import { readSessionId } from '@/lib/server/session';
+import { readCollectMode, readSessionId } from '@/lib/server/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,6 +91,16 @@ async function handle(
   const sessionId = await readSessionId();
   if (!sessionId) {
     return NextResponse.json({ error: 'no session', status: 401 }, { status: 401 });
+  }
+
+  // A collector session intentionally contains no Instagram credential. Keep
+  // this proxy closed for it so a stale UI, bookmark, or direct navigation
+  // cannot turn the browser-only flow into a server-side Instagram request.
+  if (await readCollectMode()) {
+    return NextResponse.json(
+      { error: 'browser collection sessions cannot use server-side Instagram actions', status: 403 },
+      { status: 403 },
+    );
   }
 
   const query: Record<string, string> = {};
