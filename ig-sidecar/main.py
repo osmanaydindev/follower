@@ -1014,7 +1014,10 @@ def unfollow(body: TargetBody) -> dict[str, Any]:
     # respect the cooldown and the budget like everything else.
     key = _guard_check(cl)
     try:
-        cl.user_unfollow(str(body.pk))
+        # instagrapi returns whether the relationship actually changed. Throwing
+        # the answer away reports a refusal as a success: Instagram soft-blocks
+        # a write by answering 200 with status=fail, and nothing happens.
+        ok = cl.user_unfollow(str(body.pk))
     except LoginRequired:
         raise HTTPException(status_code=401, detail="Oturum suresi doldu, tekrar giris yap.")
     except PleaseWaitFewMinutes:
@@ -1024,6 +1027,8 @@ def unfollow(body: TargetBody) -> dict[str, Any]:
         raise HTTPException(status_code=502, detail=f"Takipten cikilamadi: {exc}")
     finally:
         _guard_spend(key)
+    if ok is False:
+        raise HTTPException(status_code=502, detail="Instagram takibi birakmadi.")
     _cache_clear(key)
     return {"status": "ok"}
 
@@ -1037,7 +1042,9 @@ def remove_follower(body: TargetBody) -> dict[str, Any]:
     # respect the cooldown and the budget like everything else.
     key = _guard_check(cl)
     try:
-        cl.user_remove_follower(str(body.pk))
+        # Same reason as /unfollow: the return value is the only thing that
+        # distinguishes a real removal from a silently refused one.
+        ok = cl.user_remove_follower(str(body.pk))
     except LoginRequired:
         raise HTTPException(status_code=401, detail="Oturum suresi doldu, tekrar giris yap.")
     except PleaseWaitFewMinutes:
@@ -1047,5 +1054,7 @@ def remove_follower(body: TargetBody) -> dict[str, Any]:
         raise HTTPException(status_code=502, detail=f"Takipci cikarilamadi: {exc}")
     finally:
         _guard_spend(key)
+    if ok is False:
+        raise HTTPException(status_code=502, detail="Instagram takipciyi cikarmadi.")
     _cache_clear(key)
     return {"status": "ok"}

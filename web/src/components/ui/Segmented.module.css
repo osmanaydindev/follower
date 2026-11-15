@@ -1,0 +1,39 @@
+.wrap {
+  display: inline-flex;
+  gap: var(--sp-1);
+  padding: 0.25rem;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  /* On a 360px screen two long labels still fit because the labels wrap inside
+     the pill rather than pushing the page sideways. */
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 2.5rem;
+  padding-inline: var(--sp-4);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text-muted);
+  transition:
+    background-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease);
+}
+
+.item:hover {
+  color: var(--text);
+}
+
+.selected {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+}

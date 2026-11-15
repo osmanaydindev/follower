@@ -1,0 +1,45 @@
+.doc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  max-width: var(--prose-max);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.updated {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.lead {
+  font-size: var(--fs-md);
+  color: var(--text-muted);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.heading {
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.paragraph {
+  color: var(--text-muted);
+}
+
+.note {
+  padding: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  font-size: var(--fs-sm);
+}

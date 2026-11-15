@@ -92,6 +92,14 @@ export const api = {
     return request<Analysis>(`/api/analysis?sessionId=${encodeURIComponent(sessionId)}`);
   },
 
+  // The result of the last analysis, replayed from disk. Touches Instagram not
+  // at all, so an app restart costs nothing — 404 when there is none yet.
+  lastAnalysis(sessionId: string) {
+    return request<{ analysis: Analysis; updatedAt: number }>(
+      `/api/last-analysis?sessionId=${encodeURIComponent(sessionId)}`,
+    );
+  },
+
   // Hand the backend lists the app collected itself, inside the Instagram
   // WebView, and get the same analysis back. No Instagram request happens on the
   // server for this call — it only diffs against the stored snapshot.
@@ -129,6 +137,15 @@ export const api = {
   // Remove them from my followers.
   removeFollower(sessionId: string, pk: string) {
     return request<{ ok: boolean }>('/api/remove-follower', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, pk }),
+    });
+  },
+
+  // "I already removed this follower in my own browser — correct the snapshot."
+  // Without it the next analysis would list them as having unfollowed me.
+  snapshotForget(sessionId: string, pk: string) {
+    return request<{ ok: boolean }>('/api/snapshot-forget', {
       method: 'POST',
       body: JSON.stringify({ sessionId, pk }),
     });

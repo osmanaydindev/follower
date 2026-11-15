@@ -1,0 +1,127 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(140%) blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top);
+}
+
+.topbarInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: var(--topbar-h);
+}
+
+.brand {
+  font-size: var(--fs-md);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--accent-text);
+}
+
+.brand:hover {
+  text-decoration: none;
+}
+
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4) calc(var(--sp-8) + env(safe-area-inset-bottom));
+}
+
+.hero {
+  align-items: center;
+  padding-block: var(--sp-6);
+}
+
+.heroFallback {
+  font-size: var(--fs-md);
+  font-weight: 650;
+}
+
+.cta {
+  align-items: center;
+  text-align: center;
+  padding-block: var(--sp-6);
+}
+
+.ctaIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: var(--accent-tint);
+  color: var(--accent-text);
+}
+
+.ctaTitle {
+  font-size: var(--fs-lg);
+}
+
+.ctaBody {
+  color: var(--text-muted);
+  max-width: 30rem;
+}
+
+.updatedRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.updated {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cards {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-top: var(--sp-2);
+}
+
+/* Serif is for display sizes. At 17px inside the app it would read as a
+   mismatch, so the panel's section headings stay in the UI face. */
+.sectionTitle {
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 640px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .section .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

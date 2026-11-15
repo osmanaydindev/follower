@@ -1,0 +1,21 @@
+.avatar {
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-sunken);
+}
+
+.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  line-height: 1;
+  /* A tinted initial rather than an empty circle: on a white card a white
+     placeholder reads as a broken row. Each hsl() pair measures ~8:1, and
+     light-dark() keeps the choice in one declaration. */
+  background: hsl(var(--av-h) 48% 90%);
+  background: light-dark(hsl(var(--av-h) 48% 90%), hsl(var(--av-h) 26% 23%));
+  color: hsl(var(--av-h) 55% 26%);
+  color: light-dark(hsl(var(--av-h) 55% 26%), hsl(var(--av-h) 60% 82%));
+}

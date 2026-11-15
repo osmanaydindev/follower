@@ -20,6 +20,15 @@ type Snapshot struct {
 	Followers []instagram.User `json:"followers"`
 }
 
+// LastResult is the analysis we last handed the app, kept verbatim so a relaunch
+// can show it immediately. Reproducing it would mean paginating both lists
+// again, and every avoided collection is the point of this whole design.
+type LastResult struct {
+	Username  string          `json:"username"`
+	Timestamp int64           `json:"timestamp"`
+	Result    json.RawMessage `json:"result"`
+}
+
 type Store struct {
 	dir string
 	mu  sync.Mutex
@@ -65,6 +74,41 @@ func (s *Store) Forget(username, pk string) {
 	}
 }
 
+// SaveResult stores the analysis handed back for username. Kept in its own file
+// so the follower snapshot — which the diff depends on — is never touched by it.
+func (s *Store) SaveResult(username string, result any) {
+	data, err := json.Marshal(result)
+	if err != nil {
+		return
+	}
+	payload, err := json.Marshal(LastResult{
+		Username:  username,
+		Timestamp: time.Now().Unix(),
+		Result:    data,
+	})
+	if err != nil {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_ = os.WriteFile(s.resultPath(username), payload, 0o600)
+}
+
+// LoadResult returns the stored analysis as raw JSON plus when it was taken.
+func (s *Store) LoadResult(username string) (*LastResult, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	data, err := os.ReadFile(s.resultPath(username))
+	if err != nil {
+		return nil, false
+	}
+	var last LastResult
+	if json.Unmarshal(data, &last) != nil || len(last.Result) == 0 {
+		return nil, false
+	}
+	return &last, true
+}
+
 // load/save are the unlocked bodies; callers hold s.mu.
 func (s *Store) load(username string) (*Snapshot, bool) {
 	data, err := os.ReadFile(s.path(username))
@@ -92,6 +136,10 @@ func (s *Store) save(username string, followers []instagram.User) {
 
 func (s *Store) path(username string) string {
 	return filepath.Join(s.dir, sanitize(username)+".json")
+}
+
+func (s *Store) resultPath(username string) string {
+	return filepath.Join(s.dir, sanitize(username)+".result.json")
 }
 
 func sanitize(username string) string {

@@ -5,6 +5,8 @@ Thumbs.db
 # ---- Secrets / sessions (NEVER commit) ----
 .env
 .env.*
+# ...but the template always ships, and must stay current.
+!.env.example
 *.local
 # instagrapi session blobs (contain auth tokens)
 ig-sidecar/sessions/

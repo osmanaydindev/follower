@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Bağlantı yok · Follower</title>
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f6f8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e11" />
+    <style>
+      :root {
+        --bg: #f6f6f8;
+        --surface: #fff;
+        --border: #e6e6eb;
+        --text: #15151a;
+        --muted: #65656f;
+        --accent: #c1275b;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0e0e11;
+          --surface: #17171c;
+          --border: #2a2a32;
+          --text: #f2f2f5;
+          --muted: #a2a2ae;
+          --accent: #f58bac;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.55;
+      }
+      .card {
+        max-width: 24rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1.5rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 1.375rem;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+      button {
+        min-height: 2.75rem;
+        margin-top: 0.5rem;
+        padding-inline: 1.5rem;
+        border: 0;
+        border-radius: 999px;
+        background: #c1275b;
+        color: #fff;
+        font: inherit;
+        font-weight: 650;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Bağlantı yok</h1>
+      <p>Çevrimdışısın. Bağlantı gelince bu sayfayı yenile.</p>
+      <p lang="en">You are offline. Reload this page once you are back.</p>
+      <button type="button" onclick="location.reload()">Yenile · Reload</button>
+    </div>
+  </body>
+</html>

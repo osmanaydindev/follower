@@ -26,10 +26,15 @@ export function Avatar({ uri, name, size = 44 }: Props) {
 
 const styles = StyleSheet.create({
   img: { backgroundColor: colors.border },
+  // The letter needs a surface of its own: white-on-white left every
+  // pictureless account rendering as a blank hole — on the dashboard it looked
+  // like a broken layout, since the circle still took up its 80 points.
+  // Neutral grey rather than a brand colour, and dark text on it for contrast
+  // well past AA.
   fallback: {
-    // backgroundColor: colors.primary,
+    backgroundColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  letter: { color: '#fff', fontWeight: '700' },
+  letter: { color: colors.text, fontWeight: '700' },
 });

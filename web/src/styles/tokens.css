@@ -1,0 +1,166 @@
+/*
+ * Design tokens. Components never embed a raw hex value — when the palette
+ * changes, it changes here and nowhere else.
+ *
+ * Dark mode is a SEPARATE set of values, not an inversion, and it is expressed
+ * with `light-dark()` so each token is declared exactly once: no second block to
+ * drift out of sync. The plain declaration above each pair is the fallback for a
+ * browser without `light-dark()` — it gets the light theme rather than nothing.
+ *
+ * Which half applies is decided by the used `color-scheme`:
+ *   :root                     -> `light dark`, i.e. follow the OS
+ *   :root[data-theme=light]   -> forced light   (the in-page toggle)
+ *   :root[data-theme=dark]    -> forced dark
+ * So the toggle wins over the OS preference in both directions, which is the
+ * part that is easy to get half-right.
+ *
+ * Contrast is calculated, not eyeballed (WCAG AA: 4.5:1 body text, 3:1 large
+ * text and icons):
+ *   --text-muted  #65656F on #FFFFFF -> 5.77:1   | #A2A2AE on #17171C -> 7.07:1
+ *   --accent-text #C1275B on #FFFFFF -> 5.66:1   | #F58BAC on #17171C -> 7.80:1
+ *   white         #FFFFFF on #C1275B -> 5.66:1   (primary button, both themes)
+ *   --success     #167F52 on #FFFFFF -> 5.01:1
+ *   --danger      #C4332A on #FFFFFF -> 5.45:1
+ *   --info        #2F4FD0 on #FFFFFF -> 6.67:1
+ *
+ * The brand pink #E1306C only ever appears as a large fill or a graphic: white
+ * text on it measures 4.34:1, which passes for large/bold text but not body
+ * copy. That is why --accent (graphic) and --accent-fill (button) differ.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* surfaces */
+  --bg: #f6f6f8;
+  --bg: light-dark(#f6f6f8, #0e0e11);
+  --bg-elevated: #ffffff;
+  --bg-elevated: light-dark(#ffffff, #17171c);
+  --surface: #ffffff;
+  --surface: light-dark(#ffffff, #17171c);
+  --surface-2: #fafafc;
+  --surface-2: light-dark(#fafafc, #1e1e24);
+  --surface-sunken: #f0f0f3;
+  --surface-sunken: light-dark(#f0f0f3, #121216);
+  --border: #e6e6eb;
+  --border: light-dark(#e6e6eb, #2a2a32);
+  --border-strong: #d4d4dc;
+  --border-strong: light-dark(#d4d4dc, #3b3b46);
+
+  /* text */
+  --text: #15151a;
+  --text: light-dark(#15151a, #f2f2f5);
+  --text-muted: #65656f;
+  --text-muted: light-dark(#65656f, #a2a2ae);
+  --text-on-fill: #ffffff;
+
+  /* brand */
+  --accent: #e1306c; /* graphics and large fills only */
+  --accent: light-dark(#e1306c, #f15f8d);
+  --accent-2: #833ab4; /* second stop of the Instagram gradient */
+  --accent-2: light-dark(#833ab4, #b061d6);
+  --accent-fill: #c1275b; /* button background, carries white text */
+  --accent-fill-hover: #a81f4e;
+  --accent-fill-hover: light-dark(#a81f4e, #d4356c);
+  --accent-text: #c1275b; /* pink as text or icon */
+  --accent-text: light-dark(#c1275b, #f58bac);
+  --accent-tint: #fcecf2;
+  --accent-tint: light-dark(#fcecf2, #2a1420);
+  /* The hero wash. Weaker in dark, where the same mix glows against near-black. */
+  --accent-wash: color-mix(in srgb, #e1306c 22%, transparent);
+  --accent-wash: light-dark(
+    color-mix(in srgb, #e1306c 22%, transparent),
+    color-mix(in srgb, #f15f8d 11%, transparent)
+  );
+
+  /* status */
+  --success: #167f52;
+  --success: light-dark(#167f52, #4ed08f);
+  --success-tint: #e8f6ef;
+  --success-tint: light-dark(#e8f6ef, #11291f);
+  --danger: #c4332a;
+  --danger: light-dark(#c4332a, #ff8276);
+  --danger-tint: #fceeec;
+  --danger-tint: light-dark(#fceeec, #2d1715);
+  --danger-fill-hover: #a52b23;
+  --info: #2f4fd0;
+  --info: light-dark(#2f4fd0, #96a9ff);
+  --info-tint: #edf0fc;
+  --info-tint: light-dark(#edf0fc, #171c33);
+  --warning: #8a5300;
+  --warning: light-dark(#8a5300, #e8b45f);
+  --warning-tint: #fdf3e3;
+  --warning-tint: light-dark(#fdf3e3, #2a2114);
+
+  /* elevation — geometry is shared, only the shadow colour changes */
+  --shadow-near: rgba(20, 20, 35, 0.05);
+  --shadow-near: light-dark(rgba(20, 20, 35, 0.05), rgba(0, 0, 0, 0.5));
+  --shadow-far: rgba(20, 20, 35, 0.08);
+  --shadow-far: light-dark(rgba(20, 20, 35, 0.08), rgba(0, 0, 0, 0.55));
+  --shadow-1: 0 1px 2px var(--shadow-near), 0 4px 12px var(--shadow-far);
+  --shadow-2: 0 2px 4px var(--shadow-near), 0 12px 32px var(--shadow-far);
+  --shadow-3: 0 8px 20px var(--shadow-near), 0 32px 64px var(--shadow-far);
+  --ring: 0 0 0 3px rgba(193, 39, 91, 0.35);
+  --ring: 0 0 0 3px light-dark(rgba(193, 39, 91, 0.35), rgba(245, 139, 172, 0.4));
+
+  /* spacing — always applied with `gap`, never per-element margins */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+  --sp-9: 6rem;
+
+  /* radii */
+  --r-sm: 0.5rem;
+  --r-md: 0.75rem;
+  --r-lg: 1rem;
+  --r-xl: 1.375rem;
+  --r-2xl: 1.75rem;
+  --r-pill: 999px;
+
+  /*
+   * Two families, loaded from our own origin by next/font.
+   *   --font         Plus Jakarta Sans — everything the user reads or operates
+   *   --font-display Newsreader — headlines only, nothing below ~1.25rem
+   * The system stack behind each is the fallback while the face loads.
+   */
+  --font: var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-display: var(--font-serif), 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-base: 0.9375rem;
+  --fs-md: 1.0625rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: clamp(1.875rem, 1.2rem + 2.6vw, 2.75rem);
+  --fs-3xl: clamp(2.375rem, 1.4rem + 4.2vw, 3.5rem);
+  /* Tracked-out small label above a section heading. */
+  --fs-eyebrow: 0.6875rem;
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --t-fast: 140ms;
+  --t-base: 220ms;
+  --t-slow: 420ms;
+
+  /* layout */
+  --page-max: 72rem;
+  --prose-max: 38rem; /* ~65 characters */
+  --topbar-h: 3.5rem;
+}
+
+/* The in-page toggle. Everything above resolves from the used colour scheme, so
+   these two lines are the whole override. */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}

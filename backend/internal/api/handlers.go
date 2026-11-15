@@ -49,12 +49,14 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/logout", s.logout)
 	mux.HandleFunc("GET /api/profile", s.profile)
 	mux.HandleFunc("GET /api/analysis", s.analysis)
+	mux.HandleFunc("GET /api/last-analysis", s.lastAnalysis)
 	mux.HandleFunc("POST /api/ingest", s.ingest)
 	mux.HandleFunc("GET /api/followers", s.followers)
 	mux.HandleFunc("GET /api/following", s.following)
 	mux.HandleFunc("GET /api/user-detail", s.userDetail)
 	mux.HandleFunc("POST /api/unfollow", s.unfollow)
 	mux.HandleFunc("POST /api/remove-follower", s.removeFollower)
+	mux.HandleFunc("POST /api/snapshot-forget", s.snapshotForget)
 	mux.HandleFunc("GET /api/profile-viewers", s.profileViewers)
 	return withCORS(mux)
 }
@@ -242,7 +244,28 @@ func (s *Server) diffAndStore(username string, followers, following []instagram.
 		res.NewFollowers = analysis.Missing(followers, prev.Followers)
 	}
 	s.snaps.Save(username, followers)
+	// Keep the result itself too: relaunching the app must not cost another
+	// collection just to see the numbers that were on screen a minute ago.
+	s.snaps.SaveResult(username, res)
 	return res
+}
+
+// lastAnalysis replays the stored result of the previous analysis. It makes no
+// Instagram request at all — it exists so an app restart is free.
+func (s *Server) lastAnalysis(w http.ResponseWriter, r *http.Request) {
+	entry, ok := s.entryFor(w, r.URL.Query().Get("sessionId"))
+	if !ok {
+		return
+	}
+	last, ok := s.snaps.LoadResult(entry.Session.Username)
+	if !ok {
+		writeErr(w, http.StatusNotFound, "kayıtlı analiz yok")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"analysis":  last.Result,
+		"updatedAt": last.Timestamp,
+	})
 }
 
 type ingestReq struct {
@@ -260,6 +283,32 @@ type ingestReq struct {
 // cookie and earns "please wait a few minutes". A fetch issued by the page
 // itself has no mismatch to find. The server never sees Instagram here; it only
 // diffs and stores.
+// snapshotForget drops pk from the stored follower snapshot after the app
+// removed that follower itself, in its own browser. /api/remove-follower does
+// this as part of the call it makes to Instagram; when the app does the removing
+// there is no such call, but the snapshot still has to be corrected — otherwise
+// the next analysis reports them under "unfollowed you", and the user is the one
+// who ended it.
+func (s *Server) snapshotForget(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		SessionID string `json:"sessionId"`
+		PK        string `json:"pk"`
+	}
+	if !decode(w, r, &req) {
+		return
+	}
+	entry, ok := s.entryFor(w, req.SessionID)
+	if !ok {
+		return
+	}
+	if req.PK == "" {
+		writeErr(w, http.StatusBadRequest, "pk is required")
+		return
+	}
+	s.snaps.Forget(entry.Session.Username, req.PK)
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
 func (s *Server) ingest(w http.ResponseWriter, r *http.Request) {
 	var req ingestReq
 	if !decode(w, r, &req) {

@@ -15,6 +15,9 @@ import CookieManager from '@react-native-cookies/cookies';
 import { colors } from './src/theme';
 import { api, ApiError, THROTTLE_COOLDOWN_MS } from './src/api';
 import { clearSession, loadSession, saveSession } from './src/storage';
+import { CollectorHost } from './src/collectorHost';
+import { newCollection, type CollectionState } from './src/collection';
+import type { CollectPhase } from './src/collector';
 import type { ListKind, Route, RowAction } from './src/navigation';
 import type { Analysis, LoginResponse, Profile, User } from './src/types';
 import { LoginScreen } from './src/screens/LoginScreen';
@@ -60,6 +63,13 @@ export default function App() {
   // True until the stored session has been read back from the Keychain, so we
   // never flash the login screen at someone who is already signed in.
   const [restoring, setRestoring] = useState(true);
+  // The running collection, owned here so it survives navigation — the user can
+  // go back and read the previous results while the new lists are paginating.
+  // Null means nothing is running.
+  const [collection, setCollection] = useState<CollectionState | null>(null);
+  // Set when a collection finishes while the user is somewhere else, so the
+  // dashboard can say so instead of silently swapping the numbers out.
+  const [freshResult, setFreshResult] = useState(false);
 
   function goHome(r: LoginResponse) {
     setProfile(r.profile);
@@ -114,6 +124,18 @@ export default function App() {
       setRoute({ name: 'home', sessionId: stored.sessionId, username: stored.username });
       setRestoring(false);
 
+      // Put the last analysis back on screen. It is replayed from the server's
+      // disk — no Instagram request — so a relaunch no longer means sitting
+      // through another collection to see numbers we already had.
+      api
+        .lastAnalysis(stored.sessionId)
+        .then(({ analysis: a, updatedAt }) => {
+          if (cancelled) return;
+          setAnalysis(a);
+          setLastUpdated(updatedAt * 1000);
+        })
+        .catch(() => {}); // 404 on a first run is the normal case
+
       try {
         const p = await api.profile(stored.sessionId);
         if (cancelled) return;
@@ -134,10 +156,15 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Analysis now runs on the CollectScreen: the lists are paginated inside the
-  // app's own Instagram browser and only the finished lists reach the backend.
-  // This screen's job is just to refuse to start while we are in a cooldown.
+  // Start a collection: the lists are paginated inside the app's own Instagram
+  // browser (mounted at the root, below) and only the finished lists reach the
+  // backend. Refuses to start during a cooldown — a retry through a rate limit
+  // is what keeps the limit alive.
   function startAnalyze(sessionId: string, username: string) {
+    if (collection) {
+      setRoute({ name: 'collect', sessionId, username });
+      return;
+    }
     const left = cooldownUntil != null ? cooldownUntil - Date.now() : 0;
     if (left > 0) {
       setAnalyzeError(
@@ -146,7 +173,16 @@ export default function App() {
       return;
     }
     setAnalyzeError(null);
+    setFreshResult(false);
+    setCollection(newCollection(profile?.followersCount, profile?.followingCount));
     setRoute({ name: 'collect', sessionId, username });
+  }
+
+  // Stop for good (the user pressed "Durdur", or an error ended the run).
+  // Unmounting the host tears down the WebView, which is what stops the script.
+  function stopCollection() {
+    setCollection(null);
+    if (route.name === 'collect') backHome();
   }
 
   function applyAnalysis(a: Analysis) {
@@ -156,7 +192,11 @@ export default function App() {
     setProfile((p) =>
       p ? { ...p, followersCount: a.followersCount, followingCount: a.followingCount } : p,
     );
-    backHome();
+    setCollection(null);
+    // Only pull the user back if they stayed to watch. Yanking someone out of a
+    // list they are reading is exactly the rudeness this refactor removes.
+    if (route.name === 'collect') backHome();
+    else setFreshResult(true);
   }
 
   // Instagram said slow down — anywhere in the collection. Park the button for a
@@ -164,7 +204,18 @@ export default function App() {
   function onThrottled(message: string) {
     setCooldownUntil(Date.now() + THROTTLE_COOLDOWN_MS);
     setAnalyzeError(message);
-    backHome();
+    setCollection(null);
+    if (route.name === 'collect') backHome();
+  }
+
+  function onCollectError(message: string) {
+    setAnalyzeError(message);
+    setCollection(null);
+    if (route.name === 'collect') backHome();
+  }
+
+  function onCollectProgress(phase: CollectPhase, count: number) {
+    setCollection((c) => (c ? { ...c, phase, [phase]: count } : c));
   }
 
   function listUsers(kind: ListKind): User[] {
@@ -312,7 +363,12 @@ export default function App() {
             username={route.username}
             profile={profile}
             analysis={analysis}
-            analyzing={false}
+            collection={collection}
+            freshResult={freshResult}
+            onDismissFresh={() => setFreshResult(false)}
+            onOpenCollect={() =>
+              setRoute({ name: 'collect', sessionId: route.sessionId, username: route.username })
+            }
             error={analyzeError}
             cooldownUntil={cooldownUntil}
             lastUpdated={lastUpdated}
@@ -320,20 +376,12 @@ export default function App() {
             onOpenList={(kind: ListKind) =>
               setRoute({ name: 'list', sessionId: route.sessionId, kind })
             }
-            onOpenProfileViewers={() => setRoute({ name: 'profileViewers' })}
             onLogout={logout}
           />
         )}
 
-        {route.name === 'collect' && (
-          <CollectScreen
-            sessionId={route.sessionId}
-            expectedFollowers={profile?.followersCount}
-            expectedFollowing={profile?.followingCount}
-            onComplete={applyAnalysis}
-            onThrottled={onThrottled}
-            onCancel={backHome}
-          />
+        {route.name === 'collect' && collection && (
+          <CollectScreen state={collection} onBackground={backHome} onStop={stopCollection} />
         )}
 
         {route.name === 'list' && (
@@ -342,6 +390,10 @@ export default function App() {
             sessionId={route.sessionId}
             users={listUsers(route.kind)}
             followingPks={followingPks}
+            // Two Instagram browsers making requests at once is exactly the
+            // pattern we are pacing against, so the row bridge stands down
+            // while a collection is running.
+            collecting={collection != null}
             onApplied={applyAction}
             onBack={backHome}
           />
@@ -349,6 +401,21 @@ export default function App() {
 
         {route.name === 'profileViewers' && <ProfileViewersScreen onBack={backHome} />}
       </AnimatedRoute>
+
+      {/* Outside the animated route on purpose: this is what lets the user
+          navigate away without cancelling the collection. */}
+      {collection && home && (
+        <CollectorHost
+          sessionId={home.sessionId}
+          onProgress={onCollectProgress}
+          onSaving={() => setCollection((c) => (c ? { ...c, saving: true } : c))}
+          onComplete={applyAnalysis}
+          onThrottled={onThrottled}
+          // A failed collection reports where the user can act on it — the
+          // dashboard, which already owns the error line and the retry button.
+          onError={onCollectError}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -8,7 +8,9 @@ import {
   View,
 } from 'react-native';
 import { Avatar } from '../components/Avatar';
+import { ProgressBar } from '../components/ProgressBar';
 import { colors, radius, shadow, spacing } from '../theme';
+import { collectionProgress, PHASE_LABEL, type CollectionState } from '../collection';
 import type { Analysis, Profile } from '../types';
 import type { ListKind } from '../navigation';
 
@@ -16,14 +18,20 @@ type Props = {
   username: string;
   profile: Profile | null;
   analysis: Analysis | null;
-  analyzing: boolean;
+  // The running collection, or null. It runs at the app root, so this screen
+  // reports it rather than owning it.
+  collection: CollectionState | null;
+  // A collection finished while the user was elsewhere — say so instead of
+  // silently swapping the numbers out from under them.
+  freshResult: boolean;
+  onDismissFresh: () => void;
+  onOpenCollect: () => void;
   error: string | null;
   // Timestamp until which Instagram has rate-limited us (429), or null.
   cooldownUntil: number | null;
   lastUpdated: number | null;
   onAnalyze: () => void;
   onOpenList: (kind: ListKind) => void;
-  onOpenProfileViewers: () => void;
   onLogout: () => void;
 };
 
@@ -39,15 +47,18 @@ export function DashboardScreen({
   username,
   profile,
   analysis,
-  analyzing,
+  collection,
+  freshResult,
+  onDismissFresh,
+  onOpenCollect,
   error,
   cooldownUntil,
   lastUpdated,
   onAnalyze,
   onOpenList,
-  onOpenProfileViewers,
   onLogout,
 }: Props) {
+  const analyzing = collection != null;
   // While Instagram is rate-limiting us, every analyse entry point is disabled:
   // a retry cannot succeed and only refreshes the limit.
   const coolingMinutes =
@@ -129,14 +140,14 @@ export function DashboardScreen({
         </View>
       )}
 
-      {analyzing && !analysis && (
-        <View style={[styles.card, shadow(1)]}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.cardTitle}>Analiz ediliyor…</Text>
-          <Text style={styles.cardText}>
-            Takipçilerin ve takip ettiklerin çekiliyor. Büyük hesaplarda bir-iki dakika sürebilir.
+      {collection && <CollectionBanner state={collection} onPress={onOpenCollect} />}
+
+      {freshResult && (
+        <TouchableOpacity style={styles.fresh} onPress={onDismissFresh} activeOpacity={0.85}>
+          <Text style={styles.freshText}>
+            ✓ Analiz tamamlandı — aşağıdaki sonuçlar yenilendi.
           </Text>
-        </View>
+        </TouchableOpacity>
       )}
 
       {/* results (stay visible even while re-analyzing) */}
@@ -220,20 +231,39 @@ export function DashboardScreen({
             </Text>
           )}
 
-          <TouchableOpacity
-            style={[styles.infoCard, shadow(1)]}
-            onPress={onOpenProfileViewers}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.infoEmoji}>👁️</Text>
-            <View style={styles.flex}>
-              <Text style={styles.bigTitle}>Profilime kim baktı?</Text>
-              <Text style={styles.bigHint}>Bunu neden hiçbir uygulama gösteremez ›</Text>
-            </View>
-          </TouchableOpacity>
         </>
       )}
     </ScrollView>
+  );
+}
+
+// The collection runs at the app root, so it keeps going while the user reads
+// the previous results. This is the handle back to it: live progress, and a tap
+// to open the full screen.
+function CollectionBanner({
+  state,
+  onPress,
+}: {
+  state: CollectionState;
+  onPress: () => void;
+}) {
+  const { done, target, pct } = collectionProgress(state);
+  return (
+    <TouchableOpacity style={[styles.banner, shadow(1)]} onPress={onPress} activeOpacity={0.85}>
+      <View style={styles.bannerHead}>
+        <ActivityIndicator size="small" color={colors.primary} />
+        <Text style={styles.bannerTitle} numberOfLines={1}>
+          {state.saving ? 'Sonuçlar hesaplanıyor…' : `${PHASE_LABEL[state.phase]} çekiliyor`}
+        </Text>
+        <Text style={styles.bannerCount}>
+          {target ? `${fmt(done)} / ${fmt(target)}` : fmt(done)}
+        </Text>
+      </View>
+      <ProgressBar pct={pct} />
+      <Text style={styles.bannerHint}>
+        Arka planda sürüyor — gezinmeye devam edebilirsin. Ayrıntı için dokun ›
+      </Text>
+    </TouchableOpacity>
   );
 }
 
@@ -297,13 +327,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
   },
-  ring: {
-    padding: 3,
-    borderRadius: 46,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    marginBottom: spacing.md,
-  },
+  ring: { marginBottom: spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, maxWidth: '100%' },
   name: { fontSize: 20, fontWeight: '800', color: colors.text, flexShrink: 1 },
   verified: { color: colors.accent, fontSize: 15, fontWeight: '800' },
@@ -341,6 +365,29 @@ const styles = StyleSheet.create({
   },
   ctaDisabled: { opacity: 0.5 },
   ctaText: { color: '#fff', fontSize: 17, fontWeight: '800' },
+
+  banner: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  bannerHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  bannerTitle: { flex: 1, fontSize: 14, fontWeight: '800', color: colors.text },
+  bannerCount: { fontSize: 13, color: colors.textMuted, fontVariant: ['tabular-nums'] },
+  bannerHint: { fontSize: 12, color: colors.textMuted },
+
+  fresh: {
+    backgroundColor: colors.successTint,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  freshText: { color: colors.success, fontSize: 13, fontWeight: '700' },
 
   updatedRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   updated: { fontSize: 12, color: colors.textMuted, flexShrink: 1 },
@@ -389,14 +436,4 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 20, fontWeight: '800' },
   bigTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   bigHint: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    gap: spacing.lg,
-  },
-  infoEmoji: { fontSize: 28, minWidth: 56, textAlign: 'center' },
 });

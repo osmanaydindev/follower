@@ -1,0 +1,81 @@
+.frame {
+  /* Scale of the 360x720 design surface. Three steps rather than a fluid
+     formula: a device mockup has a fixed aspect ratio, and dividing lengths in
+     calc() is still patchy across browsers. */
+  --ps: 0.78;
+  --screen-w: 360px;
+  --screen-h: 720px;
+  flex: none;
+  width: calc(var(--screen-w) * var(--ps) + 1.5rem);
+}
+
+/* Shorter surface for the install guide: a 720px-tall phone cannot stay sticky
+   next to scrolling steps on a phone-sized viewport. */
+.short {
+  --screen-h: 540px;
+  /* Small enough that it can stay stuck to the top of a phone-sized viewport
+     and still leave room for the steps scrolling underneath it. */
+  --ps: 0.54;
+}
+
+@media (min-width: 480px) {
+  .frame {
+    --ps: 0.9;
+  }
+}
+
+@media (min-width: 720px) {
+  .short {
+    --ps: 0.72;
+  }
+}
+
+@media (min-width: 1100px) {
+  .frame {
+    --ps: 1;
+  }
+  .short {
+    --ps: 0.92;
+  }
+}
+
+.bezel {
+  position: relative;
+  padding: 0.75rem;
+  border-radius: 3rem;
+  background: linear-gradient(170deg, #3a3a44, #15151a 55%, #27272f);
+  box-shadow:
+    var(--shadow-3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.island {
+  position: absolute;
+  top: 1.15rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4.5rem;
+  height: 1.1rem;
+  border-radius: var(--r-pill);
+  background: #0a0a0d;
+  z-index: 2;
+}
+
+.viewport {
+  position: relative;
+  width: calc(var(--screen-w) * var(--ps));
+  height: calc(var(--screen-h) * var(--ps));
+  border-radius: 2.35rem;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.surface {
+  width: var(--screen-w);
+  height: var(--screen-h);
+  transform: scale(var(--ps));
+  transform-origin: top left;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

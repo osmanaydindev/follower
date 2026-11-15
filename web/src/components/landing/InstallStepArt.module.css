@@ -1,0 +1,597 @@
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+  font-size: 13px;
+}
+
+/* ---------- status bar ---------- */
+
+.status {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.9rem 1.5rem 0.4rem;
+}
+
+.clock {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.statusIcons {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.signal {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 0.625rem;
+}
+
+.signal i {
+  width: 2px;
+  background: var(--text);
+  border-radius: 1px;
+}
+.signal i:nth-child(1) {
+  height: 30%;
+}
+.signal i:nth-child(2) {
+  height: 55%;
+}
+.signal i:nth-child(3) {
+  height: 78%;
+}
+.signal i:nth-child(4) {
+  height: 100%;
+}
+
+.battery {
+  width: 1.375rem;
+  height: 0.6875rem;
+  border: 1.5px solid var(--text);
+  border-radius: 3px;
+  position: relative;
+}
+
+.battery::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  width: 65%;
+  background: var(--text);
+  border-radius: 1px;
+}
+
+/* ---------- Chrome's top bar ---------- */
+
+.topChrome {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  background: var(--surface);
+}
+
+.omnibox {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding-inline: var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+
+.host {
+  font-size: 0.75rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chromeBtn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  color: var(--text-muted);
+}
+
+/* ---------- the page behind it ---------- */
+
+.page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  overflow: hidden;
+}
+
+.pageBrand {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--accent-text);
+}
+
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+
+.pageRule {
+  width: 2rem;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--border-strong);
+}
+
+.pageCards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pageCard {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 2.5rem;
+  padding-inline: var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px solid var(--tone-border);
+  background: var(--tone-tint);
+}
+
+.pageCard i {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 5px;
+  background: var(--tone);
+  opacity: 0.55;
+}
+
+.pageCard b {
+  height: 0.4375rem;
+  width: 45%;
+  border-radius: var(--r-pill);
+  background: var(--tone);
+  opacity: 0.3;
+}
+
+.pageList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-2);
+}
+
+.pageList span {
+  height: 2rem;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.success {
+  --tone: var(--success);
+  --tone-tint: var(--success-tint);
+  --tone-border: color-mix(in srgb, var(--success) 22%, transparent);
+}
+.danger {
+  --tone: var(--danger);
+  --tone-tint: var(--danger-tint);
+  --tone-border: color-mix(in srgb, var(--danger) 22%, transparent);
+}
+.info {
+  --tone: var(--info);
+  --tone-tint: var(--info-tint);
+  --tone-border: color-mix(in srgb, var(--info) 22%, transparent);
+}
+
+/* ---------- Safari's bottom toolbar ---------- */
+
+.bottomChrome {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-5) var(--sp-4);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.safariNav,
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  color: var(--info);
+}
+
+.dim {
+  opacity: 0.35;
+}
+
+/* Dims the page while a sheet or menu is open, the way both OSes do. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 8, 14, 0.38);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--t-base) var(--ease),
+    visibility var(--t-base);
+}
+
+/* ---------- iOS share sheet ---------- */
+
+.sheet {
+  position: absolute;
+  inset-inline: 0.375rem;
+  bottom: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.28);
+  transform: translateY(104%);
+  transition: transform 460ms cubic-bezier(0.22, 1, 0.3, 1);
+}
+
+.grabber {
+  align-self: center;
+  width: 2.25rem;
+  height: 0.3125rem;
+  border-radius: var(--r-pill);
+  background: var(--border-strong);
+}
+
+.sheetHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.sheetFavicon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  background: linear-gradient(145deg, var(--accent-2), var(--accent));
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.sheetMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.sheetMeta b {
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.sheetMeta i {
+  font-style: normal;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.sheetClose {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+
+.sheetTargets {
+  display: flex;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-1);
+}
+
+.sheetTargets span {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: var(--surface-sunken);
+}
+
+.sheetRows {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.75rem;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.sheetRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 2.5rem;
+  padding-inline: var(--sp-3);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.sheetRow:last-child {
+  border-bottom: 0;
+}
+
+.sheetLabel {
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Android overflow menu ---------- */
+
+.menu {
+  position: absolute;
+  top: 3.1rem;
+  inset-inline-end: 0.5rem;
+  width: 12.5rem;
+  display: flex;
+  flex-direction: column;
+  padding-block: var(--sp-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+  transform-origin: top right;
+  transform: scale(0.85);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.3, 1),
+    opacity var(--t-fast) var(--ease),
+    visibility var(--t-base);
+}
+
+.menuRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 2.25rem;
+  padding-inline: var(--sp-3);
+  font-size: 0.8125rem;
+  color: var(--text);
+}
+
+.menuRow svg {
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* The row the step is pointing at, in both designs. */
+.addRow {
+  background: var(--accent-tint);
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+.addRow svg {
+  color: var(--accent-text);
+}
+
+/* ---------- home screen ---------- */
+
+.home {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem var(--sp-4) var(--sp-4);
+  background:
+    radial-gradient(90% 60% at 20% 0%, color-mix(in srgb, var(--accent-2) 70%, transparent), transparent 70%),
+    linear-gradient(165deg, #2b1a46, #6d2450 55%, #c2563f);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--t-base) var(--ease),
+    visibility var(--t-base);
+}
+
+.homeGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4) var(--sp-3);
+}
+
+.homeApp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3125rem;
+}
+
+.homeIcon {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.homeLabel {
+  width: 70%;
+  height: 0.3125rem;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.homeOurs .homeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+  transform: scale(0.35);
+  opacity: 0;
+}
+
+.homeGlyph {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--accent-text);
+}
+
+.homeName {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.homeDock {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 4.5rem;
+  padding-inline: var(--sp-3);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(6px);
+}
+
+.homeDock i {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* ---------- per-OS visibility ---------- */
+
+.stage[data-os='ios'] .topChrome,
+.stage[data-os='ios'] .menu {
+  display: none;
+}
+
+.stage[data-os='android'] .bottomChrome,
+.stage[data-os='android'] .sheet {
+  display: none;
+}
+
+/* ---------- step choreography ---------- */
+
+/* 1 — "open it in this browser": the address bar is what identifies it. */
+.stage[data-os='android'][data-step='0'] .omnibox {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.stage[data-os='ios'][data-step='0'] .bottomChrome {
+  box-shadow: inset 0 2px 0 0 var(--accent);
+}
+
+/* 2 — the control to tap: Share on iOS, the overflow menu on Android. */
+.stage[data-os='ios'][data-step='1'] .target,
+.stage[data-os='android'][data-step='1'] .menuTarget {
+  color: var(--text-on-fill);
+  background: var(--accent-fill);
+  animation: pulse 1.9s var(--ease) infinite;
+}
+
+/* 3 — the sheet or the menu is open, with the right row called out. */
+.stage[data-step='2'] .scrim,
+.stage[data-step='2'] .menu {
+  opacity: 1;
+  visibility: visible;
+}
+
+.stage[data-step='2'] .sheet {
+  transform: translateY(0);
+}
+
+.stage[data-step='2'] .menu {
+  transform: scale(1);
+}
+
+.stage[data-step='2'] .addRow {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+/* 4 — it has landed on the home screen. */
+.stage[data-step='3'] .home {
+  opacity: 1;
+  visibility: visible;
+}
+
+.stage[data-step='3'] .homeOurs .homeIcon {
+  transform: scale(1);
+  opacity: 1;
+  transition:
+    transform 560ms cubic-bezier(0.2, 1.45, 0.4, 1) 180ms,
+    opacity var(--t-base) 180ms;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+  65% {
+    box-shadow: 0 0 0 0.5rem color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage[data-os='ios'][data-step='1'] .target,
+  .stage[data-os='android'][data-step='1'] .menuTarget {
+    animation: none;
+  }
+  .stage[data-step='3'] .homeOurs .homeIcon {
+    transform: none;
+  }
+}

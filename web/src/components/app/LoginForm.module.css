@@ -1,0 +1,118 @@
+.card {
+  width: 100%;
+  max-width: 27rem;
+  gap: var(--sp-4);
+}
+
+.title {
+  font-size: var(--fs-xl);
+}
+
+.subtitle {
+  color: var(--text-muted);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.input {
+  width: 100%;
+  min-height: 2.875rem;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  font-size: var(--fs-md);
+  outline: none;
+  appearance: none;
+}
+
+.input:focus-visible {
+  border-color: var(--accent-text);
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.code {
+  text-align: center;
+  letter-spacing: 0.35em;
+  font-size: var(--fs-lg);
+  font-weight: 650;
+}
+
+.passwordWrap {
+  position: relative;
+  display: block;
+}
+
+.passwordWrap .input {
+  padding-inline-end: 3rem;
+}
+
+.reveal {
+  position: absolute;
+  inset-inline-end: 0.25rem;
+  inset-block: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  color: var(--text-muted);
+  border-radius: var(--r-md);
+}
+
+.reveal:hover {
+  color: var(--text);
+}
+
+.textButton {
+  align-self: center;
+  min-height: 2.75rem;
+  padding-inline: var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: var(--r-pill);
+}
+
+.textButton:hover {
+  color: var(--text);
+}
+
+.riskList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.riskList li {
+  position: relative;
+  padding-inline-start: var(--sp-4);
+}
+
+.riskList li::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.5em;
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}

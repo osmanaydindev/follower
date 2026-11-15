@@ -1,0 +1,27 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  /* 44px minimum, even though the glyph is 19px. */
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding-inline: var(--sp-2);
+  border-radius: var(--r-pill);
+  color: var(--text-muted);
+  transition:
+    background-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease);
+}
+
+.button:hover {
+  color: var(--text);
+  background: var(--surface-sunken);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

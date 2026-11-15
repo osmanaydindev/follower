@@ -1,0 +1,112 @@
+.outer {
+  background: var(--surface-sunken);
+  border-block: 1px solid var(--border);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding-block: var(--sp-8);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 34rem;
+}
+
+.subtitle {
+  font-size: var(--fs-md);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.grid {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+/* Hairline-separated rows rather than four shadowed boxes: the content here is
+   prose, and boxing prose makes a page look assembled from a kit. */
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--border-strong);
+}
+
+.icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--tone-tint);
+  color: var(--tone);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--fs-md);
+  font-weight: 650;
+}
+
+.body {
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: flex-start;
+  min-height: 2.75rem;
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+
+.success {
+  --tone: var(--success);
+  --tone-tint: var(--success-tint);
+}
+.info {
+  --tone: var(--info);
+  --tone-tint: var(--info-tint);
+}
+.warning {
+  --tone: var(--warning);
+  --tone-tint: var(--warning-tint);
+}
+
+@media (min-width: 900px) {
+  .section {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--sp-8);
+  }
+
+  /* The heading holds the left column and stays put while the assurances read
+     down the right — a shape a template would not produce. */
+  .head {
+    position: sticky;
+    top: calc(var(--topbar-h) + var(--sp-6));
+    flex: 0 0 20rem;
+  }
+
+  .grid {
+    flex: 1;
+    gap: var(--sp-5);
+  }
+}

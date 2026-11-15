@@ -1,0 +1,11 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+sessions/
+.env
+.env.*
+CLAUDE.md
+AGENTS.md
+Dockerfile
+.dockerignore

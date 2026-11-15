@@ -17,9 +17,14 @@ IG erişimi için Python (instagrapi) yardımcı servisi.
 ## Mimari
 ```
 mobile/       Expo React Native (TypeScript) uygulaması
-backend/      Go API sunucusu (:8090)
+web/          Next.js 15 — tanıtım sayfası + web paneli (:3006)
+backend/      Go API sunucusu (:8080)
 ig-sidecar/   Python instagrapi servisi (:8000) — sadece IG erişimi
 ```
+Web ve mobil **aynı** backend'i kullanır. Mobil, listeleri kendi gömülü
+tarayıcısında toplar; tarayıcıda bunun karşılığı olmadığı için (CORS,
+`X-Frame-Options`, HttpOnly çerez) web, backend'in sunucu tarafı yolunu
+kullanır. Ayrıntı: `web/CLAUDE.md`.
 Backend'in Instagram erişimi **değiştirilebilir (pluggable)** bir provider
 arkasındadır:
 - `mock` — deterministik sahte veri; uygulama IG'ye hiç dokunmadan uçtan uca
@@ -34,10 +39,25 @@ oturum token'ı (instagrapi ayar blob'u) tutulur ve o da repoya girmez
 
 ## Çalıştırma
 
+### Hepsi birden (Docker — canlıdaki ile aynı yol)
+```bash
+cp .env.example .env && chmod 600 .env   # IG_PROVIDER=mock varsayılan
+docker compose up -d --build             # web → http://127.0.0.1:3006
+```
+Veritabanı yok; durum üç adlandırılmış volume'da JSON olarak tutulur ve
+`docker compose down` bunları silmez. Canlıya alma: `./deploy.sh`.
+
 ### Backend (mock, varsayılan)
 ```bash
 cd backend
-PORT=8090 go run ./cmd/server
+go run ./cmd/server          # :8080
+```
+
+### Web
+```bash
+cd web
+npm install
+npm run dev                  # :3006
 ```
 
 ### Gerçek Instagram verisi (opsiyonel)
@@ -50,7 +70,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 Sonra backend'i gerçek modda:
 ```bash
 cd backend
-IG_PROVIDER=real IG_SIDECAR_URL=http://localhost:8000 PORT=8090 go run ./cmd/server
+IG_PROVIDER=real IG_SIDECAR_URL=http://localhost:8000 go run ./cmd/server
 ```
 
 IP'n Instagram tarafından kara listeye alınırsa, sidecar'ı bir proxy üzerinden

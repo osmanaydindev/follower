@@ -1,0 +1,99 @@
+# Canliya alma. Dogrulama gecmeden deploy calismaz.
+#
+# Deploy adimi sunucudaki ./deploy.sh'i cagirir — canliya alma bilgisi tek bir
+# yerde, calistirilabilir bir dosyada durur. Burasi yalnizca onu tetikler, boylece
+# elle `./deploy.sh` demekle CI'dan deploy etmek ayni sey olur.
+
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    # Yalnizca sunucuya giden seyler degistiginde. mobile/ tek basina
+    # degistiginde VPS'te bosuna derleme baslatmaz.
+    paths:
+      - 'web/**'
+      - 'backend/**'
+      - 'ig-sidecar/**'
+      - 'docker-compose.yml'
+      - 'deploy.sh'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+# Ust uste gelen push'larda yarim kalan deploy birakmamak icin: sirayla calis,
+# devam edeni iptal etme.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Dogrulama
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Bagimliliklar
+        working-directory: web
+        run: npm ci
+
+      - name: Tip kontrolu
+        working-directory: web
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: web
+        run: npm run lint
+
+      - name: Derleme
+        working-directory: web
+        # Ikonlar assets/*.svg'den uretiliyor ve git'te yok; derlemeden once sart.
+        run: npm run icons && npm run build
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          # Modulun ucuncu taraf bagimliligi yok, dolayisiyla go.sum da yok —
+          # cache acik birakilirsa eksik dosyayi arayip hata veriyor.
+          cache: false
+
+      - name: Go testleri
+        working-directory: backend
+        run: go test ./...
+
+  deploy:
+    name: VPS
+    needs: verify
+    runs-on: ubuntu-latest
+    # Sadece main'den; bir fork'un PR'i asla sunucuya ulasamaz.
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: SSH anahtarini yukle
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          # Sunucunun parmak izi secret'ta sabit: boylece araya girmis bir
+          # sunucuya sessizce baglanmayiz (StrictHostKeyChecking kapatmak yerine).
+          echo "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: deploy.sh
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER_NAME: ${{ secrets.VPS_USER }}
+          PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          ssh -i ~/.ssh/deploy -p "$PORT" "$USER_NAME@$HOST" \
+            'cd ~/follower && ./deploy.sh'
+
+      - name: Anahtari sil
+        if: always()
+        run: rm -f ~/.ssh/deploy

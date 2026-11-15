@@ -1,0 +1,65 @@
+.scroller {
+  /* The strip is the only thing allowed to scroll horizontally. */
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  margin-inline: calc(-1 * var(--sp-4));
+  padding-inline: var(--sp-4);
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.strip {
+  display: inline-flex;
+  gap: var(--sp-2);
+  padding-block: var(--sp-1);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 2.75rem;
+  padding-inline: var(--sp-4);
+  white-space: nowrap;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease);
+}
+
+.tab:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.selected,
+.selected:hover {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg-elevated);
+}
+
+.count {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+@media (min-width: 900px) {
+  .scroller {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+  .strip {
+    flex-wrap: wrap;
+  }
+}

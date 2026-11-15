@@ -1,0 +1,98 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  /* 44px minimum touch target, everywhere. */
+  min-height: 2.75rem;
+  padding-inline: var(--sp-5);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-base);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-align: center;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+
+.base:hover {
+  text-decoration: none;
+}
+
+.base:active {
+  transform: translateY(1px);
+}
+
+.base[aria-disabled='true'],
+.base:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.primary {
+  background: var(--accent-fill);
+  color: var(--text-on-fill);
+  box-shadow: var(--shadow-1);
+}
+.primary:hover:not(:disabled):not([aria-disabled='true']) {
+  background: var(--accent-fill-hover);
+}
+
+.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.secondary:hover:not(:disabled):not([aria-disabled='true']) {
+  border-color: var(--text-muted);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--text-muted);
+  padding-inline: var(--sp-3);
+}
+.ghost:hover:not(:disabled):not([aria-disabled='true']) {
+  color: var(--text);
+  background: var(--surface-sunken);
+}
+
+.outlineAccent {
+  background: transparent;
+  color: var(--accent-text);
+  border-color: var(--accent-text);
+}
+.outlineAccent:hover:not(:disabled):not([aria-disabled='true']) {
+  background: var(--accent-tint);
+}
+
+.danger {
+  background: var(--danger);
+  color: var(--text-on-fill);
+}
+.danger:hover:not(:disabled):not([aria-disabled='true']) {
+  background: var(--danger-fill-hover);
+}
+
+.sm {
+  min-height: 2.25rem;
+  padding-inline: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.lg {
+  min-height: 3.25rem;
+  padding-inline: var(--sp-6);
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.block {
+  width: 100%;
+}

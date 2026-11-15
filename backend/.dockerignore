@@ -1,0 +1,12 @@
+sessions/
+snapshots/
+bin/
+server
+*.test
+*.out
+.env
+.env.*
+CLAUDE.md
+AGENTS.md
+Dockerfile
+.dockerignore

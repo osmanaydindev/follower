@@ -1,0 +1,104 @@
+# Follower — web + API + Instagram sidecar.
+#
+# Only the web service publishes a port, and only on 127.0.0.1: nginx proxies to
+# it from the same host. The backend and the sidecar are reachable on the
+# compose network alone — the sidecar in particular must never be exposed, it
+# speaks to Instagram with the user's session.
+#
+# There is no database. State is three named volumes holding JSON:
+#   backend-sessions   server-side session map (live credentials)
+#   backend-snapshots  last follower list per account, for "who unfollowed me"
+#   sidecar-sessions   instagrapi settings blobs + the per-account guard state
+# `docker compose down` must never take these with it.
+
+name: follower
+
+services:
+  sidecar:
+    build:
+      context: ./ig-sidecar
+    restart: unless-stopped
+    environment:
+      IG_SESSIONS_DIR: /data/sessions
+      # Guard rails: a flagged account gets worse with every extra request, so
+      # the sidecar refuses locally instead of asking Instagram again.
+      IG_COOLDOWN_MINUTES: ${IG_COOLDOWN_MINUTES:-60}
+      IG_LOGIN_COOLDOWN_MINUTES: ${IG_LOGIN_COOLDOWN_MINUTES:-3}
+      IG_REQUESTS_PER_HOUR: ${IG_REQUESTS_PER_HOUR:-200}
+      IG_LIST_CACHE_MINUTES: ${IG_LIST_CACHE_MINUTES:-30}
+      IG_PAGES_PER_REST: ${IG_PAGES_PER_REST:-10}
+      # One sticky exit IP per account; a session that hops IPs is itself a flag.
+      IG_PROXIES: ${IG_PROXIES:-}
+      IG_PROXY: ${IG_PROXY:-}
+    volumes:
+      - sidecar-sessions:/data/sessions
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status==200 else 1)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      # mock by default: the whole app runs end to end without touching
+      # Instagram. Set IG_PROVIDER=real in .env to go live.
+      IG_PROVIDER: ${IG_PROVIDER:-mock}
+      IG_SIDECAR_URL: http://sidecar:8000
+      SESSION_DIR: /data/sessions
+      SNAPSHOT_DIR: /data/snapshots
+    volumes:
+      - backend-sessions:/data/sessions
+      - backend-snapshots:/data/snapshots
+    depends_on:
+      sidecar:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8080/api/health >/dev/null || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  web:
+    build:
+      context: ./web
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:${WEB_PORT:-3006}:3000'
+    environment:
+      BACKEND_URL: http://backend:8080
+      # Keep false until the domain has a certificate: a Secure cookie over
+      # plain http is never sent back, and the user looks permanently signed out.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SITE_URL: ${SITE_URL:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  backend-sessions:
+  backend-snapshots:
+  sidecar-sessions:

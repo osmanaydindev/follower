@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Follower">
+  <!-- Two overlapping rings: followers and following, and the overlap that is the
+       whole point of the app. Readable down to 32px because it is three shapes. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#833ab4"/>
+      <stop offset="0.55" stop-color="#e1306c"/>
+      <stop offset="1" stop-color="#ff8a4c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <g fill="none" stroke="#ffffff" stroke-width="30" stroke-linecap="round">
+    <circle cx="203" cy="256" r="104"/>
+    <circle cx="309" cy="256" r="104"/>
+  </g>
+  <path d="M256 169a104 104 0 0 0 0 174 104 104 0 0 0 0-174Z" fill="#ffffff" fill-opacity="0.92"/>
+</svg>

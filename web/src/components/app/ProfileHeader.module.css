@@ -1,0 +1,86 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  text-align: center;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.compact .name {
+  font-size: var(--fs-md);
+}
+
+.verified {
+  display: inline-flex;
+  color: var(--info);
+}
+
+.handle {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.stats {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  max-width: 24rem;
+  padding-top: var(--sp-3);
+}
+
+.statCell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.divider {
+  width: 1px;
+  align-self: center;
+  height: 2rem;
+  background: var(--border);
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  min-height: 2.75rem;
+  justify-content: center;
+  border-radius: var(--r-md);
+  color: inherit;
+}
+
+button.stat:hover {
+  background: var(--surface-sunken);
+}
+
+.statValue {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.compact .statValue {
+  font-size: var(--fs-base);
+}
+
+.statLabel {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding-inline: var(--sp-2);
+  text-align: center;
+}

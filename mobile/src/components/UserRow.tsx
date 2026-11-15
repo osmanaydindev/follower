@@ -8,8 +8,14 @@ type Props = {
   user: User;
   // Loaded lazily for the rows on screen; adds counts and a fresh picture URL.
   detail?: UserDetail;
+  // The detail request came back empty-handed — say so instead of leaving the
+  // row claiming it is still loading.
+  detailFailed?: boolean;
   showStats?: boolean;
   action?: RowAction | null;
+  // Shown in the button's place when there is no action to offer, so an empty
+  // slot reads as an explanation instead of a missing feature.
+  note?: string;
   busy?: boolean;
   done?: boolean;
   onAction?: () => void;
@@ -18,7 +24,17 @@ type Props = {
 // UserRow renders one account in a list: avatar, username (+ verified/private
 // badges), full name, optionally that account's counts, and the action button
 // that fits the list it appears in (unfollow / remove follower).
-export function UserRow({ user, detail, showStats, action, busy, done, onAction }: Props) {
+export function UserRow({
+  user,
+  detail,
+  detailFailed,
+  showStats,
+  action,
+  note,
+  busy,
+  done,
+  onAction,
+}: Props) {
   // Prefer the freshly-fetched picture: snapshot URLs expire and would otherwise
   // fall back to a blank letter avatar.
   const picUrl = detail?.profilePicUrl || user.profilePicUrl;
@@ -43,10 +59,14 @@ export function UserRow({ user, detail, showStats, action, busy, done, onAction 
           <Text style={styles.stats} numberOfLines={1}>
             {detail
               ? `${compact(detail.mediaCount)} gönderi · ${compact(detail.followersCount)} takipçi · ${compact(detail.followingCount)} takip`
-              : 'yükleniyor…'}
+              : detailFailed
+                ? 'sayılar alınamadı'
+                : 'yükleniyor…'}
           </Text>
         )}
       </View>
+
+      {!action && !!note && <Text style={styles.note}>{note}</Text>}
 
       {action && (
         <TouchableOpacity
@@ -93,6 +113,7 @@ const styles = StyleSheet.create({
   private: { fontSize: 11 },
   fullName: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   stats: { fontSize: 11.5, color: colors.textMuted, marginTop: 3 },
+  note: { fontSize: 11.5, color: colors.textMuted, maxWidth: 96, textAlign: 'right' },
 
   action: {
     minWidth: 96,
