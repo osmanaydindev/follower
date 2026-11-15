@@ -41,9 +41,20 @@ const REQUEST_TIMEOUT_MS = 90_000;
 
 export type CollectPhase = 'followers' | 'following';
 
+export type CollectedProfile = {
+  username: string;
+  fullName: string;
+  profilePicUrl: string;
+  followersCount: number;
+  followingCount: number;
+  mediaCount: number;
+  isPrivate: boolean;
+  isVerified: boolean;
+};
+
 /** What the page posts to our window. Mirrors the mobile message protocol. */
 export type CollectorMessage =
-  | { kind: 'follower-collect'; type: 'hello'; username: string }
+  | { kind: 'follower-collect'; type: 'hello'; username: string; profile?: CollectedProfile }
   | { kind: 'follower-collect'; type: 'progress'; phase: CollectPhase; count: number }
   | {
       kind: 'follower-collect';
@@ -80,9 +91,9 @@ function send(m){ m.kind='follower-collect'; try{ win.postMessage(m, ORIGIN); }c
 function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 function jitter(a,b){ return a + Math.random()*(b-a); }
 
-async function request(url){
+async function request(url, timeoutMs){
   var controller = new AbortController();
-  var timeout = setTimeout(function(){ controller.abort(); }, REQUEST_TIMEOUT_MS);
+  var timeout = setTimeout(function(){ controller.abort(); }, timeoutMs || REQUEST_TIMEOUT_MS);
   try {
     return await fetch(url, {
       credentials:'include',
@@ -107,7 +118,7 @@ function mapUser(u){
     fullName: u.full_name || '',
     isPrivate: !!u.is_private,
     isVerified: !!u.is_verified,
-    profilePicUrl: u.profile_pic_url || ''
+    profilePicUrl: u.profile_pic_url_hd || u.profile_pic_url || ''
   };
 }
 
@@ -127,6 +138,27 @@ async function whoami(){
     if (r.ok) { var j = await r.json(); return (j.user && j.user.username) || ''; }
   } catch(e){}
   return '';
+}
+
+async function readProfile(username){
+  var profile = { username: username, fullName: '', profilePicUrl: '', followersCount: 0, followingCount: 0, mediaCount: 0, isPrivate: false, isVerified: false };
+  // The endpoint Instagram's own web profile page uses. A refusal here must
+  // never block the actual list collection.
+  try {
+    var r = await request('/api/v1/users/web_profile_info/?username=' + encodeURIComponent(username), 15000);
+    if (!r.ok) return profile;
+    var d = await r.json();
+    var u = d && d.data && d.data.user;
+    if (!u) return profile;
+    profile.fullName = u.full_name || '';
+    profile.profilePicUrl = u.profile_pic_url_hd || u.profile_pic_url || '';
+    profile.followersCount = (u.edge_followed_by && u.edge_followed_by.count) || 0;
+    profile.followingCount = (u.edge_follow && u.edge_follow.count) || 0;
+    profile.mediaCount = (u.edge_owner_to_timeline_media && u.edge_owner_to_timeline_media.count) || 0;
+    profile.isPrivate = !!u.is_private;
+    profile.isVerified = !!u.is_verified;
+  } catch(e) {}
+  return profile;
 }
 
 async function fetchList(kind){
@@ -163,7 +195,8 @@ async function fetchList(kind){
       send({type:'error', message:'Instagram kullanici adi okunamadi. Kendi profil sayfanizi acip yer imine tekrar tiklayin.'});
       return;
     }
-    send({type:'hello', username: username});
+    var profile = await readProfile(username);
+    send({type:'hello', username: username, profile: profile});
     var followers = await fetchList('followers');
     if (followers === null) return;
     // Sequential, same reason the server path is: one account paginating two

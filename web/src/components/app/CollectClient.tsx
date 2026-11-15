@@ -10,9 +10,26 @@ import { Icon } from '../ui/Icon';
 import { Spinner } from '../ui/Spinner';
 import { bookmarkletHref, type CollectPhase } from '@/lib/collector';
 import { href, type Dict, type Locale } from '@/lib/i18n';
+import type { Profile } from '@/lib/types';
 import styles from './CollectClient.module.css';
 
 const IG_ORIGIN = 'https://www.instagram.com';
+
+function profileFromMessage(value: unknown): Profile | null {
+  if (!value || typeof value !== 'object') return null;
+  const p = value as Record<string, unknown>;
+  if (typeof p.username !== 'string' || !p.username) return null;
+  return {
+    username: p.username.slice(0, 64),
+    fullName: typeof p.fullName === 'string' ? p.fullName.slice(0, 128) : '',
+    profilePicUrl: typeof p.profilePicUrl === 'string' ? p.profilePicUrl.slice(0, 4096) : '',
+    followersCount: typeof p.followersCount === 'number' ? p.followersCount : 0,
+    followingCount: typeof p.followingCount === 'number' ? p.followingCount : 0,
+    mediaCount: typeof p.mediaCount === 'number' ? p.mediaCount : 0,
+    isPrivate: Boolean(p.isPrivate),
+    isVerified: Boolean(p.isVerified),
+  };
+}
 
 type Stage =
   | { name: 'idle' }
@@ -37,6 +54,7 @@ export function CollectClient({
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const submitted = useRef(false);
   const bookmarklet = useRef<HTMLAnchorElement>(null);
+  const collectedProfile = useRef<Profile | null>(null);
 
   const href_ = bookmarkletHref(origin, href(locale, 'collect'));
 
@@ -76,7 +94,7 @@ export function CollectClient({
         try {
           sessionStorage.setItem(
             `follower.analysis.${username}`,
-            JSON.stringify({ analysis: data, at: Date.now() }),
+            JSON.stringify({ analysis: data, profile: collectedProfile.current, at: Date.now() }),
           );
         } catch {
           /* private mode: the panel simply starts empty */
@@ -101,6 +119,7 @@ export function CollectClient({
 
       switch (msg.type) {
         case 'hello':
+          collectedProfile.current = profileFromMessage(msg.profile);
           setStage({ name: 'collecting', phase: 'followers', followers: 0, following: 0 });
           break;
         case 'progress':

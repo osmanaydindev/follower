@@ -87,6 +87,13 @@ chooses to do so.
   important because the progress bar is intentionally indeterminate without
   known follower/following totals, so a stuck network request could otherwise
   look like normal pacing forever.
+- The collector also reads the owner profile through Instagram's normal web
+  profile endpoint, as a best-effort browser-side enhancement. Its avatar,
+  name, verification state and post count travel with the collected analysis
+  and are retained in `sessionStorage`; refusal of that one request never
+  blocks the lists. Signed Instagram image URLs are permitted up to 4096
+  characters in the ingest sanitizer (the former 512-character limit silently
+  truncated them, causing broken list avatars).
 
 ## Current worktree
 

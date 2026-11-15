@@ -30,7 +30,7 @@ import {
 } from '@/lib/types';
 import styles from './PanelClient.module.css';
 
-type Stored = { analysis: Analysis; at: number };
+type Stored = { analysis: Analysis; profile?: Profile; at: number };
 
 function storageKey(username: string) {
   return `follower.analysis.${username}`;
@@ -91,6 +91,7 @@ export function PanelClient({
     if (stored) {
       setAnalysis(stored.analysis);
       setLastUpdated(stored.at);
+      if (stored.profile) setProfile(stored.profile);
     }
   }, [username]);
 
@@ -98,8 +99,8 @@ export function PanelClient({
   // pure — React calls them twice in development, and a write inside one would
   // run twice with it.
   useEffect(() => {
-    if (analysis && lastUpdated) saveStored(username, { analysis, at: lastUpdated });
-  }, [analysis, lastUpdated, username]);
+    if (analysis && lastUpdated) saveStored(username, { analysis, profile: profile ?? undefined, at: lastUpdated });
+  }, [analysis, lastUpdated, profile, username]);
 
   // Cooldowns are wall-clock, so a tick is enough to re-render the countdown.
   const [, forceTick] = useState(0);
@@ -245,11 +246,7 @@ export function PanelClient({
     [applyAction],
   );
 
-  /**
-   * On the collector path there is no credential to read a profile with, so the
-   * header is built from what the collection itself reports. Posts and the
-   * picture are genuinely unknown here and are left out rather than faked.
-   */
+  /** The browser collector supplies the owner profile while it is on Instagram. */
   const headerProfile: Profile | null = useMemo(() => {
     if (profile) return profile;
     if (!analysis || !username) return null;

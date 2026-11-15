@@ -40,7 +40,9 @@ function sanitize(input: unknown, cap = 50_000): User[] {
       fullName: typeof u.fullName === 'string' ? u.fullName.slice(0, 128) : '',
       isPrivate: Boolean(u.isPrivate),
       isVerified: Boolean(u.isVerified),
-      profilePicUrl: typeof u.profilePicUrl === 'string' ? u.profilePicUrl.slice(0, 512) : '',
+      // Instagram CDN URLs are signed and commonly exceed 512 characters.
+      // Truncating them turns a valid picture into a guaranteed 403.
+      profilePicUrl: typeof u.profilePicUrl === 'string' ? u.profilePicUrl.slice(0, 4096) : '',
     });
   }
   return out;
