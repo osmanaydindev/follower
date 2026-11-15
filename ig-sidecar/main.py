@@ -443,15 +443,72 @@ def _challenge_method(cl: Client) -> str:
     return "2fa"
 
 
+#: Tokens we look for in the Bloks method-picker response, mapped to the name we
+#: report. Order matters: the first match is what the UI is told to ask for.
+_METHOD_TOKENS = (
+    ("totp", "totp"),
+    ("authenticator", "totp"),
+    ("backup_code", "backup_codes"),
+    ("whatsapp", "whatsapp"),
+    ("sms", "sms"),
+    ("email", "email"),
+)
+
+
+def _probe_2fa_methods(cl: Client) -> list[str]:
+    """Ask Instagram which second factors this account actually offers.
+
+    Without this all we know is "some kind of 2FA", and the app guesses a code
+    screen — which is wrong when the account uses an authenticator app (nothing
+    is ever delivered; the code is read from the app) and wrong again when it
+    is an in-app approval. The official client opens this same picker before it
+    decides what to show, so this is not an extra round trip the flow would not
+    otherwise make.
+
+    Best effort: a failure here must not break the login, only leave us guessing.
+    """
+    try:
+        ctx = cl._extract_two_step_verification_context(cl.last_json) or ""
+    except Exception:  # noqa: BLE001
+        ctx = ""
+    if not ctx:
+        return []
+    try:
+        cl.bloks_two_step_verification_entrypoint(ctx)
+        picker = cl.bloks_two_step_verification_method_picker(ctx)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[login] yontem listesi alinamadi: {type(exc).__name__}: {exc}")
+        return []
+    blob = json.dumps(picker).lower()
+    found: list[str] = []
+    for token, name in _METHOD_TOKENS:
+        if token in blob and name not in found:
+            found.append(name)
+    return found
+
+
 def _start_2fa(cl: Client) -> dict[str, Any]:
     """Register a mid-2FA client in PENDING and return the challenge response so the
     app opens the code screen. auth carries only the pending id (not settings)."""
     pid = uuid4().hex
     PENDING[pid] = cl
     method = _challenge_method(cl)
-    print(f"[login] 2FA required (method={method}) pid={pid} "
-          f"tf_keys={list(_two_factor_info(cl).keys())}")
-    return {"status": "challenge", "method": method, "auth": json.dumps({"pending": pid})}
+    lj = cl.last_json if isinstance(cl.last_json, dict) else {}
+    offered = _probe_2fa_methods(cl)
+    if offered and method == "2fa":
+        method = offered[0]
+    print(
+        f"[login] 2FA required (method={method}) pid={pid} "
+        f"tf_keys={list(_two_factor_info(cl).keys())} "
+        f"offered={offered} json_keys={sorted(lj.keys())[:12]} "
+        f"error_type={lj.get('error_type')!r}"
+    )
+    return {
+        "status": "challenge",
+        "method": method,
+        "methods": offered,
+        "auth": json.dumps({"pending": pid}),
+    }
 
 
 def _complete_challenge(cl: Client, code: str) -> None:
