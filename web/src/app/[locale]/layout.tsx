@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import { Newsreader, Plus_Jakarta_Sans } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { dict, isLocale, LOCALES, type Locale } from '@/lib/i18n';
 import { ThemeScript } from '@/components/ui/ThemeScript';
@@ -7,30 +6,14 @@ import { ServiceWorker } from '@/components/ui/ServiceWorker';
 import '@/styles/globals.css';
 
 /*
- * Two faces, self-hosted. next/font downloads them at build time and serves
- * them from our own origin — no request ever leaves for a font CDN, and there
- * is no layout shift while one loads.
- *
- * `latin-ext` is not optional: ğ, ş, İ and ı live there, and without it Turkish
- * copy falls back mid-word to whatever the device has.
+ * Fonts live in public/fonts and are declared in styles/fonts.css. They used to
+ * come through next/font/google, which fetches them during `next build` — that
+ * made an external service a build dependency, and a flaky response from it
+ * failed CI and held up an unrelated deploy. See web/CLAUDE.md.
  *
  * Newsreader (serif) carries the headlines and nothing else. A single serif
  * voice at display size is what keeps the page from reading like a template.
  */
-const sans = Plus_Jakarta_Sans({
-  subsets: ['latin', 'latin-ext'],
-  variable: '--font-sans',
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
-});
-
-const serif = Newsreader({
-  subsets: ['latin', 'latin-ext'],
-  variable: '--font-serif',
-  display: 'swap',
-  weight: ['400', '500', '600'],
-  style: ['normal', 'italic'],
-});
 
 // This is the root layout: the locale is the first segment, so <html lang> can
 // only be correct if the element itself lives inside the dynamic segment.
@@ -105,7 +88,26 @@ export default async function LocaleLayout({
   const t = dict(locale as Locale);
 
   return (
-    <html lang={t.htmlLang} className={`${sans.variable} ${serif.variable}`} suppressHydrationWarning>
+    <html lang={t.htmlLang} suppressHydrationWarning>
+      <head>
+        {/* The two faces above the fold. Without this the browser only
+            discovers them after the stylesheet parses, and the headline
+            visibly reflows. */}
+        <link
+          rel="preload"
+          href="/fonts/plus-jakarta-sans-normal-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/newsreader-normal-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body>
         <ThemeScript />
         <a className="skipLink" href="#main">

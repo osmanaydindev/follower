@@ -123,14 +123,14 @@
   --r-pill: 999px;
 
   /*
-   * Two families, loaded from our own origin by next/font.
+   * Two families, served from our own origin (see fonts.css).
    *   --font         Plus Jakarta Sans — everything the user reads or operates
    *   --font-display Newsreader — headlines only, nothing below ~1.25rem
    * The system stack behind each is the fallback while the face loads.
    */
-  --font: var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+  --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
-  --font-display: var(--font-serif), 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
 
   --fs-xs: 0.75rem;
   --fs-sm: 0.8125rem;

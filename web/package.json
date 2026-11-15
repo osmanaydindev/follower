@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "icons": "node scripts/icons.mjs"
+    "icons": "node scripts/icons.mjs",
+    "fonts": "node scripts/fonts.mjs"
   },
   "dependencies": {
     "next": "^15.5.4",
