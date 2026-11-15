@@ -129,6 +129,26 @@ must run on the same browser's `instagram.com` page, not inside the Instagram
 app. “Add to Home Screen” is a web shortcut, not a JavaScript bookmarklet, and
 must not be presented as an alternative.
 
+## Recommended easier phone path (not yet implemented for the browser-only flow)
+
+Bookmarklets are the no-install fallback, not the best phone UX. The simpler
+product path is a Follower native app with an embedded browser collector:
+
+- on first use, the person signs in to Instagram in that app's WebView;
+- the Instagram cookie remains in that device's WebView and is never uploaded
+  to the Follower server;
+- later collections are a single in-app button, with no bookmark editing; and
+- the collected result is associated with the person's separate Follower
+  account so it can be viewed on another device.
+
+The repository has an older Expo mobile app, but it currently hands a captured
+Instagram session to the backend and therefore does **not** meet this new
+browser-only boundary. It must be refactored to post browser-collected lists to
+`/api/collect`, like the web bookmarklet. Android is the practical first target;
+iPhone distribution requires a native iOS app or Safari extension and the
+corresponding Apple distribution setup. A PWA/add-to-home-screen shortcut alone
+cannot read another origin's Instagram session and is not a replacement.
+
 ## Current worktree
 
 The initial collector and the two follow-up fixes above have been committed and
