@@ -316,9 +316,59 @@ def _apply_proxy(cl: Client, key: str | None = None) -> None:
         cl.set_proxy(proxy)
 
 
+def _safe_name(username: str) -> str:
+    return "".join(c for c in username.lower() if c.isalnum() or c in "._-")
+
+
 def _session_file(username: str) -> Path:
-    safe = "".join(c for c in username.lower() if c.isalnum() or c in "._-")
-    return SESSIONS_DIR / f"{safe}.json"
+    return SESSIONS_DIR / f"{_safe_name(username)}.json"
+
+
+def _device_file(username: str) -> Path:
+    return SESSIONS_DIR / f"{_safe_name(username)}.device.json"
+
+
+# The parts of instagrapi's settings that describe the "phone" we claim to be.
+# Everything else in get_settings() is session state.
+_DEVICE_KEYS = (
+    "uuids",
+    "device_settings",
+    "user_agent",
+    "country",
+    "country_code",
+    "locale",
+    "timezone_offset",
+)
+
+
+def _load_or_create_device(cl: Client, username: str) -> None:
+    """Pin this account to ONE device identity across login attempts.
+
+    instagrapi invents a fresh device (uuids, android id, model) for every new
+    Client, and settings were only persisted after a *successful* login. When
+    Instagram answers with "approve this login on your phone", the login never
+    succeeds, so nothing was saved — and the next attempt arrived as yet another
+    unknown device needing its own approval. The user approves, retries, and is
+    asked again, forever.
+
+    Writing the device out *before* the login breaks that loop: the retry is the
+    same phone Instagram was just asked to trust.
+    """
+    df = _device_file(username)
+    if df.exists():
+        try:
+            stored = json.loads(df.read_text())
+            cl.set_settings({**cl.get_settings(), **stored})
+            return
+        except Exception as exc:  # noqa: BLE001 — unreadable device file, start over
+            print(f"[device] {username}: kayitli cihaz okunamadi ({exc}), yenisi uretiliyor")
+    settings = cl.get_settings()
+    device = {k: settings[k] for k in _DEVICE_KEYS if settings.get(k) is not None}
+    try:
+        df.write_text(json.dumps(device))
+        df.chmod(0o600)
+    except Exception as exc:  # noqa: BLE001 — not fatal, only costs another approval
+        print(f"[device] {username}: cihaz kaydedilemedi ({exc})")
 
 
 # Key under which the browser identity rides along in the auth blob. instagrapi's
@@ -722,7 +772,10 @@ def login(body: LoginBody) -> dict[str, Any]:
         except Exception:  # noqa: BLE001 — stale session, fall through to password login
             cl = _new_client()
 
-    # 2) Fresh password login.
+    # 2) Fresh password login, from the account's pinned device. Without this
+    #    every attempt looks like a brand-new phone and an approval granted on
+    #    the previous attempt counts for nothing.
+    _load_or_create_device(cl, body.username)
     try:
         cl.login(body.username, body.password)
     except TwoFactorRequired:
